@@ -26,6 +26,39 @@ class ResidualBlock(nn.Module):
         out = torch.relu(out)
         return out
 
+class AudioClassifier(nn.Module):
+    super().__init__()
+    def __init__(self, num_classes=50):
+        self.layer1 = nn.Sequential(
+            nn.Conv2d(1,64,7,2,3,bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(3,2,1),
+        )
+        self.layer2 = nn.ModuleList([ResidualBlock(64,64,1,False) for _ in range(3)])
+        self.layer3 = nn.ModuleList([ResidualBlock(64 if i == 0 else 128,128,1,False) for i in range(4)])
+        self.layer4 = nn.ModuleList([ResidualBlock(128 if i == 0 else 256,256,1,False) for i in range(6)])
+        self.layer5 = nn.ModuleList([ResidualBlock(256 if i == 0 else 512,512,1,False) for i in range(3)])
+        self.avgpool = nn.AdaptiveAvgPool2d((1,1))
+        self.dropout = nn.Dropout(0.5)
+        self.fc = nn.Linear(512,num_classes)
+    def forward(self,x):
+        x = self.layer1(x)
+        for layer in self.layer2:
+            x = layer(x)
+        for layer in self.layer3:
+            x = layer(x)
+        for layer in self.layer4:
+            x = layer(x)
+        for layer in self.layer5:
+            x = layer(x)
+        x = self.avgpool(x)
+        x = x.view(x.size(0),-1)
+        x = self.dropout(x)
+        x = self.fc(x)
+        return x
+
+
 
 
 
