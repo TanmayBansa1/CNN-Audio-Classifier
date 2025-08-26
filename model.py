@@ -27,8 +27,8 @@ class ResidualBlock(nn.Module):
         return out
 
 class AudioClassifier(nn.Module):
-    super().__init__()
     def __init__(self, num_classes=50):
+        super().__init__()
         self.layer1 = nn.Sequential(
             nn.Conv2d(1,64,7,2,3,bias=False),
             nn.BatchNorm2d(64),
