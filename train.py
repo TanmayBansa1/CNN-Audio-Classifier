@@ -84,12 +84,12 @@ def train():
 
     train_transform = nn.Sequential(
         T.MelSpectrogram(
-            sample_rate=22050,
-            n_fft=1024,
+            sample_rate=44100,
+            n_fft=2048,
             hop_length=512,
             n_mels=128,
             f_min=0,
-            f_max=11025
+            f_max=22050
         ),
         T.AmplitudeToDB(),
         T.FrequencyMasking(freq_mask_param=30),
@@ -97,12 +97,12 @@ def train():
     )
     val_transform = nn.Sequential(
         T.MelSpectrogram(
-            sample_rate=22050,
-            n_fft=1024,
+            sample_rate=44100,
+            n_fft=2048,
             hop_length=512,
             n_mels=128,
             f_min=0,
-            f_max=11025
+            f_max=22050
         ),
         T.AmplitudeToDB()
     )

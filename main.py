@@ -24,12 +24,12 @@ class AudioProcessor:
     def __init__(self):
         self.transform = nn.Sequential(
             T.MelSpectrogram(
-                sample_rate=22050,
-                n_fft=1024,
+                sample_rate=44100,
+                n_fft=2048,
                 hop_length=512,
                 n_mels=128,
                 f_min=0,
-                f_max=11025
+                f_max=22050
             ),
             T.AmplitudeToDB()
         )
@@ -102,14 +102,14 @@ class Main:
         if audio_data.ndim >1:
             audio_data = np.mean(audio_data,axis=1)
 
-        if sample_rate != 22050:
-            audio_data = librosa.resample(audio_data,orig_sr=sample_rate,target_sr=22050)
+        if sample_rate != 44100:
+            audio_data = librosa.resample(audio_data,orig_sr=sample_rate,target_sr=44100)
 
         spectrogram = self.processor.process_audio(audio_data)
         spectrogram = spectrogram.to(self.device)
 
         with torch.no_grad():
-            output = self.model(spectrogram)
+            output, feature_maps = self.model(spectrogram, return_feature_maps=True)
             output = torch.nan_to_num(output)
 
             probabilities = torch.softmax(output,dim=1) # dim = 0 is batch and dim = 1 is classes
@@ -118,14 +118,42 @@ class Main:
 
             predictions = [{"class": self.classes[idx.item()], "confidence": prob.item()} for prob,idx in zip(top3_probs[0],top3_indices[0])]
 
-            return {"predictions":predictions}
+            visualizations = {}
+            for name, tensor in feature_maps.items():
+                if tensor.dim == 4: #batch_size,channels,height,width
+                    aggregate_tensor = torch.mean(tensor,dim=1)
+                    squeezed_tensor = aggregate_tensor.squeeze(0)
+                    numpy_array = squeezed_tensor.cpu().numpy()
+                    clean_array = np.nan_to_num(numpy_array)
+                    visualizations[name] = {
+                        "shape": list(clean_array.shape),
+                        "values": clean_array.tolist()
+                    }
+            # batch_size,channels,height,width
+            spectogram_np = spectrogram.squeeze(0).squeeze(0).cpu().numpy()
+            clean_spectogram = np.nan_to_num(spectogram_np)
+
+            max_samples = 8000
+            if len(audio_data) > max_samples:
+                step = len(audio_data) // max_samples
+                waveform_data = audio_data[::step]
+            else:
+                waveform_data = audio_data
+            return {"predictions":predictions, "visualization":visualizations, "input_spectogram":{
+                "shape": list(clean_spectogram.shape),
+                "values": clean_spectogram.tolist()
+            }, "waveform": {
+                "values": waveform_data.tolist(),
+                "sample_rate": sample_rate,
+                "duration": len(audio_data) / sample_rate
+            }}
 
 
 @app.local_entrypoint()
 def main():
     audio_data, sample_rate = sf.read("1-103995-A-30.wav")
     buffer = io.BytesIO()
-    sf.write(buffer,audio_data,22050,format="WAV")
+    sf.write(buffer,audio_data,sample_rate,format="WAV")
     audio_b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
     payload = {"audio_data":audio_b64}
     server = Main()
@@ -136,6 +164,15 @@ def main():
 
 
     result = response.json()
+
+    waveform_info = result.get("waveform",{})
+    if waveform_info:
+        values = waveform_info.get("values",[])
+        print(f"first 10 values of waveform: {[round(v,4) for v in values[:10]]}...")
+        print(f"sample rate: {waveform_info.get('sample_rate',0)}")
+        print(f"duration: {waveform_info.get('duration',0)} seconds")
+
+
     print("Top 3 predictions:")
     for prediction in result.get("predictions",[]):
         print(f"{prediction['class']}: {prediction['confidence']:0.2%}")
