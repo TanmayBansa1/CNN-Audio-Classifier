@@ -71,7 +71,7 @@ def mixup_audios(x,y): #features and labels
 def mixup_loss(criterion,prediction,y_a,y_b,lam):
     return lam * criterion(prediction,y_a) + (1-lam) * criterion(prediction,y_b)
 
-@app.function(image=image, gpu="A10G", volumes={"/data": volume, "/models": model_volume}, timeout=60*60*3)
+@app.function(image=image, gpu="A10G", volumes={"/opt/ESC-50": volume, "/models": model_volume}, timeout=60*60*3)
 def train():
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

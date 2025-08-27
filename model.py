@@ -35,10 +35,10 @@ class AudioClassifier(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3,2,1),
         )
-        self.layer2 = nn.ModuleList([ResidualBlock(64,64,1,False) for _ in range(3)])
-        self.layer3 = nn.ModuleList([ResidualBlock(64 if i == 0 else 128,128,1,False) for i in range(4)])
-        self.layer4 = nn.ModuleList([ResidualBlock(128 if i == 0 else 256,256,1,False) for i in range(6)])
-        self.layer5 = nn.ModuleList([ResidualBlock(256 if i == 0 else 512,512,1,False) for i in range(3)])
+        self.layer2 = nn.ModuleList([ResidualBlock(64,64,stride=2 if _ == 0 else 1,bias=False) for _ in range(3)])
+        self.layer3 = nn.ModuleList([ResidualBlock(64 if i == 0 else 128,128,stride=2 if i == 0 else 1,bias=False) for i in range(4)])
+        self.layer4 = nn.ModuleList([ResidualBlock(128 if i == 0 else 256,256,stride=2 if i == 0 else 1,bias=False) for i in range(6)])
+        self.layer5 = nn.ModuleList([ResidualBlock(256 if i == 0 else 512,512,stride=2 if i == 0 else 1,bias=False) for i in range(3)])
         self.avgpool = nn.AdaptiveAvgPool2d((1,1))
         self.dropout = nn.Dropout(0.5)
         self.fc = nn.Linear(512,num_classes)
