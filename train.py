@@ -75,8 +75,9 @@ def mixup_loss(criterion,prediction,y_a,y_b,lam):
 def train():
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_dir = f"/logs/trensorboard_logs/run_{timestamp}"
+    log_dir = f"/models/tensorboard_logs/run_{timestamp}"
     writer = SummaryWriter(log_dir)
+    print(f"TensorBoard logs will be written to: {log_dir}")
 
 
     esc50_dir = Path("/opt/ESC-50")
