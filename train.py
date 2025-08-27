@@ -197,7 +197,7 @@ def train():
             print("New Model saved",accuracy)
     
     writer.close()
-    print("Training completed: Best accuracy: {best_accuracy:.2f}%")
+    print(f"Training completed: Best accuracy: {best_accuracy:.2f}%")
                 
     return 0
 
