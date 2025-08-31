@@ -52,7 +52,7 @@ class ESC50Dataset(Dataset):
         return spectogram, row["label"]
 
 
-image = modal.Image.debian_slim().pip_install_from_requirements("requirements.txt").apt_install("ffmpeg", "libsndfile1", "wget", "unzip").run_commands("cd /tmp && wget https://github.com/karolpiczak/ESC-50/archive/master.zip -O ESC-50.zip","cd /tmp && unzip ESC-50.zip", "mkdir -p /opt/ESC-50", "cp -r /tmp/ESC-50-master/* /opt/ESC-50/", "rm -rf /tmp/ESC-50.zip /tmp/ESC-50-master").add_local_python_source("model")
+image = modal.Image.debian_slim().pip_install_from_requirements("requirements.txt").apt_install("ffmpeg", "libsndfile1", "wget", "unzip").add_local_python_source("model")
 
 volume = modal.Volume.from_name("ESC-50", create_if_missing=True)
 model_volume = modal.Volume.from_name("model-volume", create_if_missing=True)
@@ -80,7 +80,31 @@ def train():
     print(f"TensorBoard logs will be written to: {log_dir}")
 
 
+    import subprocess
+
     esc50_dir = Path("/opt/ESC-50")
+    esc50_audio_dir = esc50_dir / "audio"
+
+    if not esc50_audio_dir.exists():
+        print("ESC-50 data not found in volume. Downloading...")
+        esc50_dir.mkdir(parents=True, exist_ok=True)
+
+        tmp_dir = Path("/tmp/ESC-50-download")
+        tmp_dir.mkdir(parents=True, exist_ok=True)
+        zip_path = tmp_dir / "ESC-50.zip"
+        
+        print("Downloading ESC-50.zip...")
+        subprocess.run(["wget", "https://github.com/karolpiczak/ESC-50/archive/master.zip", "-O", str(zip_path)], check=True)
+        print("Unzipping ESC-50.zip...")
+        subprocess.run(["unzip", str(zip_path), "-d", str(tmp_dir)], check=True)
+        
+        print(f"Moving data from {tmp_dir / 'ESC-50-master'} to {esc50_dir}")
+
+        subprocess.run(["cp", "-r", str(tmp_dir / "ESC-50-master") + "/.", str(esc50_dir)], check=True)
+        subprocess.run(["rm", "-rf", str(tmp_dir)], check=True)
+        print("ESC-50 data prepared in volume.")
+    else:
+        print("ESC-50 data already exists in volume.")
 
     train_transform = nn.Sequential(
         T.MelSpectrogram(
