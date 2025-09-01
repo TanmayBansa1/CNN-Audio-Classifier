@@ -120,7 +120,7 @@ class Main:
 
             visualizations = {}
             for name, tensor in feature_maps.items():
-                if tensor.dim == 4: #batch_size,channels,height,width
+                if tensor.dim() == 4: #batch_size,channels,height,width
                     aggregate_tensor = torch.mean(tensor,dim=1)
                     squeezed_tensor = aggregate_tensor.squeeze(0)
                     numpy_array = squeezed_tensor.cpu().numpy()
