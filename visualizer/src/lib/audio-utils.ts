@@ -23,10 +23,13 @@ export function validateAudioFile(file: File): { isValid: boolean; error?: strin
   const allowedTypes = [
     'audio/wav', 
     'audio/mpeg', 
+    'audio/mp3',
     'audio/mp4', 
     'audio/flac',
     'audio/x-wav',
-    'audio/x-flac'
+    'audio/x-flac',
+    'audio/x-mpeg',
+    'audio/x-mp3'
   ];
   
   if (!allowedTypes.includes(file.type) && !(/\.(wav|mp3|m4a|flac)$/i.exec(file.name))) {

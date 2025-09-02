@@ -50,7 +50,7 @@ export function FileUpload({ onFileSelect, isLoading }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onDrop as (acceptedFiles: File[]) => void,
     accept: {
-      'audio/*': ['.wav']
+      'audio/*': ['.wav', '.mp3', '.m4a', '.flac']
     },
     multiple: false,
     disabled: isLoading,

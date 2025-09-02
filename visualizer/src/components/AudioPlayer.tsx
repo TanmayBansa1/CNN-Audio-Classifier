@@ -11,6 +11,7 @@ interface AudioPlayerProps {
   audioUrl: string;
   waveformData?: WaveformData;
   className?: string;
+  audioFile?: File; // Add optional file prop to determine type
 }
 
 interface PlayerState {
@@ -23,7 +24,7 @@ interface PlayerState {
   useFallback: boolean;
 }
 
-export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile }: AudioPlayerProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   
@@ -46,18 +47,156 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
   // Initialize WaveSurfer
   useEffect(() => {
     if (!waveformRef.current || !audioUrl) return;
+    
+    // Capture the current ref value for cleanup
+    const currentWaveformContainer = waveformRef.current;
+
+    // Reset state
+    updatePlayerState({ 
+      isLoading: true, 
+      error: null, 
+      useFallback: false,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0 
+    });
 
     const initializeWaveSurfer = async () => {
+      // Cleanup previous instance
+      if (wavesurferRef.current) {
+        try {
+          wavesurferRef.current.destroy();
+        } catch (error) {
+          // Ignore cleanup errors
+          console.warn('Error during cleanup:', error);
+        }
+        wavesurferRef.current = null;
+      }
+      
+      // Clear the container to remove any leftover visualizations
+      if (waveformRef.current) {
+        waveformRef.current.innerHTML = '';
+      }
+
+      // Try WebAudio first for better visualization, fallback to MediaElement if needed
+      const isMP3 = audioFile ? 
+        (audioFile.type.includes('mp3') || audioFile.type.includes('mpeg') || audioFile.name.toLowerCase().endsWith('.mp3')) :
+        (audioUrl.includes('mp3') || audioUrl.includes('mpeg'));
+
+      // Set a timeout to fallback to native audio if WaveSurfer takes too long
+      const fallbackTimeout: NodeJS.Timeout = setTimeout(() => {
+        console.warn('WaveSurfer taking too long, falling back to native audio');
+        updatePlayerState({
+          useFallback: true,
+          isLoading: false,
+          error: null,
+        });
+      }, 15000); // 15 second timeout for all files
+
+      // Function to retry with MediaElement backend for MP3 files
+      const retryWithMediaElement = async () => {
+        try {
+          console.log('Retrying with MediaElement backend...');
+          
+          // Clean up previous WaveSurfer instance first
+          if (wavesurferRef.current) {
+            try {
+              wavesurferRef.current.destroy();
+            } catch (cleanupError) {
+              console.warn('Error cleaning up previous WaveSurfer:', cleanupError);
+            }
+            wavesurferRef.current = null;
+          }
+          
+          // Clear the container to remove any leftover visualizations
+          if (waveformRef.current) {
+            waveformRef.current.innerHTML = '';
+          }
+          
+          const mediaElementConfig = {
+            container: waveformRef.current!,
+            waveColor: 'rgba(147, 197, 253, 0.8)',
+            progressColor: 'rgba(59, 130, 246, 1)',
+            cursorColor: 'rgba(249, 250, 251, 0.8)',
+            barWidth: 2,
+            barRadius: 1,
+            barGap: 1,
+            height: 400,
+            normalize: true,
+            backend: 'MediaElement' as const,
+            mediaControls: false,
+            fillParent: true,
+            scrollParent: false,
+            hideScrollbar: true,
+            autoCenter: true,
+            mediaType: 'audio' as const,
+            preload: 'metadata' as const,
+          };
+
+          const mediaElementWavesurfer = WaveSurfer.create(mediaElementConfig);
+          wavesurferRef.current = mediaElementWavesurfer;
+
+          // Set up events for MediaElement attempt
+          mediaElementWavesurfer.on('ready', () => {
+            clearTimeout(fallbackTimeout);
+            updatePlayerState({
+              duration: mediaElementWavesurfer.getDuration(),
+              isLoading: false,
+            });
+          });
+
+          mediaElementWavesurfer.on('audioprocess', () => {
+            updatePlayerState({
+              currentTime: mediaElementWavesurfer.getCurrentTime(),
+            });
+          });
+
+          mediaElementWavesurfer.on('timeupdate', () => {
+            updatePlayerState({
+              currentTime: mediaElementWavesurfer.getCurrentTime(),
+            });
+          });
+
+          mediaElementWavesurfer.on('play', () => {
+            updatePlayerState({ isPlaying: true });
+          });
+
+          mediaElementWavesurfer.on('pause', () => {
+            updatePlayerState({ isPlaying: false });
+          });
+
+          mediaElementWavesurfer.on('finish', () => {
+            updatePlayerState({ isPlaying: false, currentTime: 0 });
+          });
+
+          mediaElementWavesurfer.on('error', () => {
+            console.error('MediaElement also failed, falling back to native audio');
+            updatePlayerState({
+              useFallback: true,
+              isLoading: false,
+              error: null,
+            });
+          });
+
+          await mediaElementWavesurfer.load(audioUrl);
+        } catch (retryError) {
+          console.error('MediaElement retry failed:', retryError);
+          updatePlayerState({
+            useFallback: true,
+            isLoading: false,
+            error: null,
+          });
+        }
+      };
+
       try {
         updatePlayerState({ isLoading: true, error: null });
+        // Start with WebAudio for better waveform visualization
+        const backend: 'MediaElement' | 'WebAudio' = 'WebAudio';
+        
+        console.log(`Using ${backend} backend for ${isMP3 ? 'MP3' : 'other'} audio file:`, audioFile?.name ?? audioUrl);
 
-        // Cleanup previous instance
-        if (wavesurferRef.current) {
-          wavesurferRef.current.destroy();
-          wavesurferRef.current = null;
-        }
-
-        const wavesurfer = WaveSurfer.create({
+        const baseConfig = {
           container: waveformRef.current!,
           waveColor: 'rgba(147, 197, 253, 0.8)', // blue-300 with opacity
           progressColor: 'rgba(59, 130, 246, 1)', // blue-500
@@ -67,14 +206,28 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
           barGap: 1,
           height: 400,
           normalize: true,
-          backend: 'WebAudio', // Force WebAudio backend for better blob URL support
-          mediaControls: false
-        });
+          backend,
+          mediaControls: false,
+          fillParent: true,
+          scrollParent: false,
+          hideScrollbar: true,
+          autoCenter: true,
+        };
+
+        // Use WebAudio configuration for better waveform visualization
+        const config = {
+          ...baseConfig,
+          forceDecode: false, // Let browser handle decoding when possible
+          interact: true, // Enable waveform interaction
+        };
+
+        const wavesurfer = WaveSurfer.create(config);
 
         wavesurferRef.current = wavesurfer;
 
         // Set up event listeners before loading
         wavesurfer.on('ready', () => {
+          clearTimeout(fallbackTimeout); // Clear timeout on successful load
           updatePlayerState({
             duration: wavesurfer.getDuration(),
             isLoading: false,
@@ -106,29 +259,51 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
         });
 
         wavesurfer.on('error', (error: Error) => {
-          console.error('WaveSurfer error:', error);
-          updatePlayerState({
-            error: 'Failed to load audio file. Please try a different format.',
-            isLoading: false,
-          });
+          clearTimeout(fallbackTimeout); // Clear timeout on error
+          console.error('WaveSurfer WebAudio error:', error);
+          
+          // For MP3 files, try MediaElement backend before giving up
+          if (isMP3 && backend === 'WebAudio') {
+            console.log('Retrying with MediaElement backend for MP3...');
+            void retryWithMediaElement();
+          } else {
+            console.error('Falling back to native audio');
+            updatePlayerState({
+              useFallback: true,
+              isLoading: false,
+              error: null,
+            });
+          }
         });
 
         // Load audio - use a try-catch for blob URL issues
         try {
           await wavesurfer.load(audioUrl);
         } catch (loadError) {
-          console.error('Failed to load audio URL, falling back to native audio:', loadError);
-          updatePlayerState({
-            useFallback: true,
-            isLoading: false,
-          });
+          clearTimeout(fallbackTimeout); // Clear timeout on load error
+          console.error('Failed to load audio URL with WebAudio:', loadError);
+          
+          // For MP3 files, try MediaElement backend before giving up
+          if (isMP3 && backend === 'WebAudio') {
+            console.log('Retrying with MediaElement backend for MP3...');
+            void retryWithMediaElement();
+          } else {
+            console.error('Falling back to native audio');
+            updatePlayerState({
+              useFallback: true,
+              isLoading: false,
+              error: null,
+            });
+          }
         }
 
       } catch (error) {
+        clearTimeout(fallbackTimeout); // Clear timeout on initialization error
         console.error('Failed to initialize WaveSurfer, falling back to native audio:', error);
         updatePlayerState({
           useFallback: true,
           isLoading: false,
+          error: null,
         });
       }
     };
@@ -138,11 +313,23 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
     // Cleanup
     return () => {
       if (wavesurferRef.current) {
-        wavesurferRef.current.destroy();
+        try {
+          wavesurferRef.current.destroy();
+        } catch (error) {
+          // Ignore AbortError during cleanup
+          if (error instanceof Error && error.name !== 'AbortError') {
+            console.warn('Error during WaveSurfer cleanup:', error);
+          }
+        }
         wavesurferRef.current = null;
       }
+      
+      // Clear the container to remove any leftover visualizations
+      if (currentWaveformContainer) {
+        currentWaveformContainer.innerHTML = '';
+      }
     };
-  }, [audioUrl, updatePlayerState]); // Removed playerState.volume from dependencies
+  }, [audioUrl, audioFile, updatePlayerState]); // Added audioFile dependency
 
   // Fallback audio element effect
   useEffect(() => {
@@ -189,9 +376,17 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
-    // Load the audio
-    audio.src = audioUrl;
-    audio.load();
+    // Load the audio with error handling
+    try {
+      audio.src = audioUrl;
+      audio.load();
+    } catch (error) {
+      console.error('Failed to set audio source:', error);
+      updatePlayerState({
+        error: 'Failed to load audio file - format may not be supported',
+        isLoading: false,
+      });
+    }
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
