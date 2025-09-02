@@ -20,6 +20,7 @@ interface PlayerState {
   volume: number;
   isLoading: boolean;
   error: string | null;
+  useFallback: boolean;
 }
 
 export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
@@ -33,7 +34,10 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
     volume: 0.7,
     isLoading: true,
     error: null,
+    useFallback: false,
   });
+
+  const fallbackAudioRef = useRef<HTMLAudioElement>(null);
 
   const updatePlayerState = useCallback((updates: Partial<PlayerState>) => {
     setPlayerState(prev => ({ ...prev, ...updates }));
@@ -41,11 +45,17 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
 
   // Initialize WaveSurfer
   useEffect(() => {
-    if (!waveformRef.current) return;
+    if (!waveformRef.current || !audioUrl) return;
 
     const initializeWaveSurfer = async () => {
       try {
         updatePlayerState({ isLoading: true, error: null });
+
+        // Cleanup previous instance
+        if (wavesurferRef.current) {
+          wavesurferRef.current.destroy();
+          wavesurferRef.current = null;
+        }
 
         const wavesurfer = WaveSurfer.create({
           container: waveformRef.current!,
@@ -55,14 +65,15 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
           barWidth: 2,
           barRadius: 1,
           barGap: 1,
-          height: 80,
+          height: 400,
           normalize: true,
+          backend: 'WebAudio', // Force WebAudio backend for better blob URL support
+          mediaControls: false
         });
 
-        // Load audio
-        await wavesurfer.load(audioUrl);
-        
-        // Set up event listeners
+        wavesurferRef.current = wavesurfer;
+
+        // Set up event listeners before loading
         wavesurfer.on('ready', () => {
           updatePlayerState({
             duration: wavesurfer.getDuration(),
@@ -97,20 +108,26 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
         wavesurfer.on('error', (error: Error) => {
           console.error('WaveSurfer error:', error);
           updatePlayerState({
-            error: 'Failed to load audio',
+            error: 'Failed to load audio file. Please try a different format.',
             isLoading: false,
           });
         });
 
-        // Set initial volume
-        wavesurfer.setVolume(playerState.volume);
-        
-        wavesurferRef.current = wavesurfer;
+        // Load audio - use a try-catch for blob URL issues
+        try {
+          await wavesurfer.load(audioUrl);
+        } catch (loadError) {
+          console.error('Failed to load audio URL, falling back to native audio:', loadError);
+          updatePlayerState({
+            useFallback: true,
+            isLoading: false,
+          });
+        }
 
       } catch (error) {
-        console.error('Failed to initialize WaveSurfer:', error);
+        console.error('Failed to initialize WaveSurfer, falling back to native audio:', error);
         updatePlayerState({
-          error: 'Failed to initialize audio player',
+          useFallback: true,
           isLoading: false,
         });
       }
@@ -125,32 +142,115 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
         wavesurferRef.current = null;
       }
     };
-  }, [audioUrl, playerState.volume, updatePlayerState]);
+  }, [audioUrl, updatePlayerState]); // Removed playerState.volume from dependencies
+
+  // Fallback audio element effect
+  useEffect(() => {
+    if (!playerState.useFallback || !fallbackAudioRef.current) return;
+
+    const audio = fallbackAudioRef.current;
+    
+    const handleLoadedMetadata = () => {
+      updatePlayerState({
+        duration: audio.duration,
+        isLoading: false,
+      });
+    };
+
+    const handleTimeUpdate = () => {
+      updatePlayerState({
+        currentTime: audio.currentTime,
+      });
+    };
+
+    const handlePlay = () => {
+      updatePlayerState({ isPlaying: true });
+    };
+
+    const handlePause = () => {
+      updatePlayerState({ isPlaying: false });
+    };
+
+    const handleEnded = () => {
+      updatePlayerState({ isPlaying: false, currentTime: 0 });
+    };
+
+    const handleError = () => {
+      updatePlayerState({
+        error: 'Failed to load audio file',
+        isLoading: false,
+      });
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
+    // Load the audio
+    audio.src = audioUrl;
+    audio.load();
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [playerState.useFallback, audioUrl, updatePlayerState]);
+
+  // Set volume for WaveSurfer
+  useEffect(() => {
+    if (!playerState.useFallback && wavesurferRef.current && !playerState.isLoading) {
+      try {
+        wavesurferRef.current.setVolume(playerState.volume);
+      } catch (error) {
+        console.warn('Failed to set WaveSurfer volume:', error);
+      }
+    }
+  }, [playerState.useFallback, playerState.volume, playerState.isLoading]);
+
+  // Set volume for fallback audio
+  useEffect(() => {
+    if (playerState.useFallback && fallbackAudioRef.current) {
+      fallbackAudioRef.current.volume = playerState.volume;
+    }
+  }, [playerState.useFallback, playerState.volume]);
 
   const handlePlayPause = useCallback(() => {
-    if (!wavesurferRef.current) return;
-
-    if (playerState.isPlaying) {
-      wavesurferRef.current.pause();
-    } else {
-      void wavesurferRef.current.play();
+    if (playerState.useFallback && fallbackAudioRef.current) {
+      if (playerState.isPlaying) {
+        fallbackAudioRef.current.pause();
+      } else {
+        void fallbackAudioRef.current.play();
+      }
+    } else if (wavesurferRef.current) {
+      if (playerState.isPlaying) {
+        wavesurferRef.current.pause();
+      } else {
+        void wavesurferRef.current.play();
+      }
     }
-  }, [playerState.isPlaying]);
+  }, [playerState.isPlaying, playerState.useFallback]);
 
   const handleRestart = useCallback(() => {
-    if (!wavesurferRef.current) return;
-    
-    wavesurferRef.current.seekTo(0);
-    updatePlayerState({ currentTime: 0 });
-  }, [updatePlayerState]);
+    if (playerState.useFallback && fallbackAudioRef.current) {
+      fallbackAudioRef.current.currentTime = 0;
+      updatePlayerState({ currentTime: 0 });
+    } else if (wavesurferRef.current) {
+      wavesurferRef.current.seekTo(0);
+      updatePlayerState({ currentTime: 0 });
+    }
+  }, [updatePlayerState, playerState.useFallback]);
 
   const handleVolumeChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(event.target.value);
     updatePlayerState({ volume: newVolume });
-    
-    if (wavesurferRef.current) {
-      wavesurferRef.current.setVolume(newVolume);
-    }
+    // Volume will be set by the useEffect hooks
   }, [updatePlayerState]);
 
   const progressPercentage = playerState.duration > 0 
@@ -172,7 +272,14 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
       className={`bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 ${className}`}
     >
       <div className="flex items-center justify-between mb-4">
-        <h4 className="text-xl font-bold text-white">Audio Waveform</h4>
+        <div className="flex items-center space-x-2">
+          <h4 className="text-xl font-bold text-white">Audio Waveform</h4>
+          {playerState.useFallback && (
+            <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">
+              Fallback Mode
+            </span>
+          )}
+        </div>
         {waveformData && (
           <div className="text-sm text-gray-300">
             {formatDuration(waveformData.duration)} • {waveformData.sample_rate}Hz
@@ -181,18 +288,44 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
       </div>
 
       {/* Waveform Container */}
-      <div className="relative mb-6">
+      <div className="relative mb-6 w-full">
         {playerState.isLoading && (
-          <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center z-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center z-10 h-full">
+            <div className="animate-spin rounded-full h-[400px] w-[400px] border-b-2 border-blue-500"></div>
           </div>
         )}
-        <div
-          ref={waveformRef}
-          className="bg-black/30 rounded-lg overflow-hidden"
-          style={{ minHeight: '80px' }}
-        />
+        
+        {playerState.useFallback ? (
+          <div className="bg-black/30 rounded-lg overflow-hidden h-[400px] w-full flex items-center justify-center">
+            <div className="flex items-center space-x-1 w-full justify-center">
+              {Array.from({ length: 400 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-blue-400 rounded-sm animate-pulse"
+                  style={{
+                    height: `${20 + Math.random() * 400}px`,
+                    animationDelay: `${i * 30}ms`,
+                    animationDuration: '2s',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div
+            ref={waveformRef}
+            className="bg-black/30 rounded-lg overflow-hidden w-full"
+            style={{ minHeight: '400px', width: '100%' }}
+          />
+        )}
       </div>
+
+      {/* Hidden fallback audio element */}
+      <audio
+        ref={fallbackAudioRef}
+        style={{ display: 'none' }}
+        preload="metadata"
+      />
 
       {/* Controls */}
       <div className="space-y-4">

@@ -29,7 +29,7 @@ export function validateAudioFile(file: File): { isValid: boolean; error?: strin
     'audio/x-flac'
   ];
   
-  if (!allowedTypes.includes(file.type) && !file.name.match(/\.(wav|mp3|m4a|flac)$/i)) {
+  if (!allowedTypes.includes(file.type) && !(/\.(wav|mp3|m4a|flac)$/i.exec(file.name))) {
     return {
       isValid: false,
       error: 'Please upload a valid audio file (WAV, MP3, M4A, FLAC)'
@@ -81,7 +81,7 @@ export function downsampleArray(array: number[], targetLength: number): number[]
     let count = 0;
     
     for (let j = start; j < end; j++) {
-      sum += Math.abs(array[j] || 0);
+      sum += Math.abs(array[j] ?? 0);
       count++;
     }
     

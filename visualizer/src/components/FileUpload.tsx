@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, FileAudio, X, AlertCircle } from 'lucide-react';
-import { AudioFile } from '~/lib/types';
+import type { AudioFile } from '~/lib/types';
 import { validateAudioFile, formatFileSize, getAudioDuration } from '~/lib/audio-utils';
 
 interface FileUploadProps {
@@ -22,20 +22,20 @@ export function FileUpload({ onFileSelect, isLoading }: FileUploadProps) {
     if (acceptedFiles.length === 0) return;
     
     const file = acceptedFiles[0];
-    const validation = validateAudioFile(file);
+    const validation = validateAudioFile(file!);
     
     if (!validation.isValid) {
-      setUploadError(validation.error || 'Invalid file');
+      setUploadError(validation.error ?? 'Invalid file');
       return;
     }
 
     try {
-      const duration = await getAudioDuration(file);
+      const duration = await getAudioDuration(file!);
       const audioFile: AudioFile = {
-        file,
-        url: URL.createObjectURL(file),
-        name: file.name,
-        size: file.size,
+        file: file!,
+        url: URL.createObjectURL(file!),
+        name: file!.name,
+        size: file!.size,
         duration,
       };
       
@@ -48,9 +48,9 @@ export function FileUpload({ onFileSelect, isLoading }: FileUploadProps) {
   }, [onFileSelect]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+    onDrop: onDrop as (acceptedFiles: File[]) => void,
     accept: {
-      'audio/*': ['.wav', '.mp3', '.m4a', '.flac']
+      'audio/*': ['.wav']
     },
     multiple: false,
     disabled: isLoading,
@@ -104,7 +104,7 @@ export function FileUpload({ onFileSelect, isLoading }: FileUploadProps) {
                     Drag and drop or click to select
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                    Supports WAV, MP3, M4A, FLAC (max 50MB)
+                    Supports WAV(max 50MB)
                   </p>
                 </div>
               </motion.div>
