@@ -77,7 +77,7 @@ export function CustomHeatmap({
     const innerHeight = dimensions.height - margin.top - margin.bottom;
 
     const rows = processedData.length;
-    const cols = processedData[0]?.length || 0;
+    const cols = processedData[0]?.length ?? 0;
 
     if (rows === 0 || cols === 0) return;
 
@@ -101,7 +101,7 @@ export function CustomHeatmap({
           .attr('stroke', 'rgba(255,255,255,0.1)')
           .attr('stroke-width', 0.5)
           .style('cursor', 'crosshair')
-          .on('mouseover', function(event) {
+          .on('mouseover', function() {
             // Highlight cell
             d3.select(this)
               .attr('stroke', 'white')
@@ -191,7 +191,7 @@ export function CustomHeatmap({
 
     const steps = 10;
     for (let i = 0; i <= steps; i++) {
-      const value = stats!.min + (stats!.max - stats!.min) * (i / steps);
+      const value = stats.min + (stats.max - stats.min) * (i / steps);
       gradient.append('stop')
         .attr('offset', `${i * 10}%`)
         .attr('stop-color', colorScale(value));
@@ -206,7 +206,7 @@ export function CustomHeatmap({
     // Legend axis
     legend.append('g')
       .attr('transform', `translate(${legendWidth}, 0)`)
-      .call(d3.axisRight(legendScale).ticks(5).tickFormat(d => d.toFixed(2)))
+      .call(d3.axisRight(legendScale).ticks(5))
       .selectAll('text')
       .style('fill', 'white')
       .style('font-size', '10px');
@@ -238,7 +238,7 @@ export function CustomHeatmap({
       <div className="text-center mb-2">
         <h4 className="text-white font-medium">{title}</h4>
         <div className="text-xs text-gray-400">
-          {processedData.length}×{processedData[0]?.length || 0}
+          {processedData.length}×{processedData[0]?.length ?? 0}
         </div>
       </div>
 

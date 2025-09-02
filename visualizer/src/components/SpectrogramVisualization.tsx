@@ -8,7 +8,7 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
 import { Slider } from '~/components/ui/slider';
-import { SpectrogramData } from '~/lib/types';
+import { type SpectrogramData } from '~/lib/types';
 
 interface SpectrogramVisualizationProps {
   data: SpectrogramData;
@@ -115,7 +115,7 @@ export function SpectrogramVisualization({
     const scheme = COLOR_SCHEMES[colorSchemeIndex];
     return d3.scaleSequential()
       .domain([0, 1])
-      .interpolator(d3.interpolateRgbBasis(scheme.colors));
+      .interpolator(d3.interpolateRgbBasis(scheme?.colors ?? []));
   }, [colorSchemeIndex]);
 
   // Reset zoom function
@@ -222,7 +222,7 @@ export function SpectrogramVisualization({
     };
     
     requestAnimationFrame(renderFrame);
-  }, [renderSpectrogram]);
+  }, [renderSpectrogram, processedData]);
 
   // Handle window resize
   useEffect(() => {
@@ -324,7 +324,7 @@ export function SpectrogramVisualization({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    Color: {COLOR_SCHEMES[colorSchemeIndex].name}
+                    Color: {COLOR_SCHEMES[colorSchemeIndex]?.name}
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -336,7 +336,7 @@ export function SpectrogramVisualization({
               <div className="flex-1">
                 <Slider
                   value={dynamicRange}
-                  onValueChange={setDynamicRange}
+                  onValueChange={setDynamicRange as (value: number[]) => void}
                   max={120}
                   min={40}
                   step={5}
