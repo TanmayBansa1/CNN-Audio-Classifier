@@ -9,6 +9,7 @@ import { FeatureMapsVisualization } from '~/components/FeatureMapsVisualization'
 import { PredictionsDisplay } from '~/components/PredictionsDisplay';
 import type { AudioFile, AnalysisState } from '~/lib/types';
 import { audioAPI } from '~/lib/api';
+import Image from 'next/image';
 
 export default function HomePage() {
   const [audioFile, setAudioFile] = useState<AudioFile | null>(null);
@@ -56,8 +57,8 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-3"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
+              <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Image src="/logo.png" alt="SunoAI" width={80} height={80} className='rounded-lg'/>
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">SunoAI</h1>
@@ -70,7 +71,6 @@ export default function HomePage() {
               animate={{ opacity: 1, x: 0 }}
               className="text-right"
             >
-              <p className="text-sm text-gray-300">ResNet Audio Classifier</p>
               <p className="text-xs text-gray-400">50 Audio Classes • ESC-50 Dataset</p>
             </motion.div>
           </div>
