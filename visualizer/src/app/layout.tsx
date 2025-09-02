@@ -3,7 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Providers } from "~/lib/providers";
-
+import { Analytics } from "@vercel/analytics/next";
 export const metadata: Metadata = {
   title: "SunoAI - Audio CNN Visualizer",
   description: "Professional audio classification and CNN visualization tool powered by SunoAI",
@@ -23,6 +23,7 @@ export default function RootLayout({
       <body>
         <Providers>
           {children}
+          <Analytics />
         </Providers>
       </body>
     </html>
