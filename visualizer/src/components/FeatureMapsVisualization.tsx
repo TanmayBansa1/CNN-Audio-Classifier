@@ -165,7 +165,7 @@ export function FeatureMapsVisualization({
 
   if (processedLayers.length === 0) {
     return (
-      <Card className={`bg-white/10 backdrop-blur-sm border-white/20 ${className}`}>
+      <Card className={`bg-white/80 backdrop-blur-xl border border-purple-300/40 rounded-3xl shadow-lg ${className}`}>
         <CardContent className="p-6">
           <div className="text-center text-gray-400">
             No feature maps available
@@ -182,11 +182,18 @@ export function FeatureMapsVisualization({
         animate={{ opacity: 1, y: 0 }}
         className={className}
       >
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-xl font-bold text-white">
-              <Layers className="w-6 h-6" />
-              <span>CNN Feature Maps</span>
+        <motion.div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-300/30 via-indigo-300/30 to-blue-300/30 rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <Card className="relative bg-white/80 backdrop-blur-xl border border-purple-300/40 rounded-3xl shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-3 text-xl font-playfair font-medium">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full blur-lg opacity-60 animate-pulse"></div>
+                <div className="relative w-7 h-7 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-full flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-white" />
+                </div>
+              </div>
+              <span className="bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-700 bg-clip-text text-transparent">CNN Feature Maps</span>
               <Tooltip>
                 <TooltipTrigger>
                   <Info className="w-4 h-4 text-gray-400" />
@@ -200,12 +207,12 @@ export function FeatureMapsVisualization({
 
           <CardContent className="p-6">
             <Tabs value={selectedLayer || Object.keys(groupedLayers)[0]} onValueChange={setSelectedLayer}>
-              <TabsList className="grid w-full grid-cols-5 bg-black/30">
+              <TabsList className="grid w-full grid-cols-5 bg-gradient-to-r from-purple-100/70 to-indigo-100/70 backdrop-blur-sm border border-purple-200/50 rounded-xl">
                 {Object.keys(groupedLayers).map(groupName => (
                   <TabsTrigger 
                     key={groupName}
                     value={groupName}
-                    className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-indigo-500 data-[state=active]:text-white font-crimson data-[state=inactive]:text-gray-700"
                   >
                     {LAYER_DISPLAY_NAMES[groupName] ?? groupName}
                   </TabsTrigger>
@@ -217,25 +224,25 @@ export function FeatureMapsVisualization({
                   <div className="space-y-4">
                     {/* Group Statistics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-black/30 rounded-lg p-3 text-center">
-                        <div className="text-sm text-gray-400">Layers</div>
-                        <div className="text-lg font-bold text-white">{layers.length}</div>
+                      <div className="bg-gradient-to-br from-purple-100/60 to-indigo-100/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-purple-200/40 shadow-sm">
+                        <div className="text-sm font-crimson text-purple-600">Layers</div>
+                        <div className="text-xl font-playfair font-semibold text-purple-800">{layers.length}</div>
                       </div>
-                      <div className="bg-black/30 rounded-lg p-3 text-center">
-                        <div className="text-sm text-gray-400">Avg Sparsity</div>
-                        <div className="text-lg font-bold text-white">
+                      <div className="bg-gradient-to-br from-indigo-100/60 to-blue-100/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-indigo-200/40 shadow-sm">
+                        <div className="text-sm font-crimson text-indigo-600">Avg Sparsity</div>
+                        <div className="text-xl font-playfair font-semibold text-indigo-800">
                           {(layers.reduce((sum, l) => sum + l.statistics.sparsity, 0) / layers.length * 100).toFixed(1)}%
                         </div>
                       </div>
-                      <div className="bg-black/30 rounded-lg p-3 text-center">
-                        <div className="text-sm text-gray-400">Total Activations</div>
-                        <div className="text-lg font-bold text-white">
+                      <div className="bg-gradient-to-br from-blue-100/60 to-cyan-100/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-blue-200/40 shadow-sm">
+                        <div className="text-sm font-crimson text-blue-600">Total Activations</div>
+                        <div className="text-xl font-playfair font-semibold text-blue-800">
                           {layers.reduce((sum, l) => sum + l.info.activationCount, 0).toLocaleString()}
                         </div>
                       </div>
-                      <div className="bg-black/30 rounded-lg p-3 text-center">
-                        <div className="text-sm text-gray-400">Avg Activation</div>
-                        <div className="text-lg font-bold text-white">
+                      <div className="bg-gradient-to-br from-cyan-100/60 to-teal-100/60 backdrop-blur-sm rounded-2xl p-4 text-center border border-cyan-200/40 shadow-sm">
+                        <div className="text-sm font-crimson text-cyan-600">Avg Activation</div>
+                        <div className="text-xl font-playfair font-semibold text-cyan-800">
                           {(layers.reduce((sum, l) => sum + l.statistics.mean, 0) / layers.length).toFixed(3)}
                         </div>
                       </div>
@@ -248,18 +255,18 @@ export function FeatureMapsVisualization({
                           key={layer.info.name}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          className={`border border-white/10 rounded-lg ${
+                          className={`border border-purple-200/40 bg-white/50 backdrop-blur-sm rounded-2xl shadow-sm ${
                             hiddenLayers.has(layer.info.name) ? 'opacity-50' : ''
                           }`}
                         >
                           {/* Layer Header */}
-                          <div className="flex items-center justify-between p-4 bg-black/20">
+                          <div className="flex items-center justify-between p-5 bg-gradient-to-r from-purple-50/80 to-indigo-50/80 backdrop-blur-sm border-b border-purple-200/30">
                             <div className="flex items-center space-x-3">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => toggleLayerExpansion(layer.info.name)}
-                                className="p-1 h-6 w-6 text-gray-400 hover:text-white"
+                                className="p-1 h-6 w-6 text-purple-600 hover:text-purple-800"
                               >
                                 {expandedLayers.has(layer.info.name) ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -269,8 +276,8 @@ export function FeatureMapsVisualization({
                               </Button>
                               
                               <div>
-                                <h4 className="font-medium text-white">{layer.info.displayName}</h4>
-                                <div className="text-sm text-gray-400">
+                                <h4 className="font-playfair font-medium text-purple-800">{layer.info.displayName}</h4>
+                                <div className="text-sm font-crimson text-purple-600">
                                   Shape: {layer.info.shape.join('×')} • 
                                   Activations: {layer.info.activationCount.toLocaleString()}
                                 </div>
@@ -279,15 +286,15 @@ export function FeatureMapsVisualization({
 
                             <div className="flex items-center space-x-2">
                               <div className="text-right text-sm">
-                                <div className="text-white">μ: {layer.statistics.mean.toFixed(3)}</div>
-                                <div className="text-gray-400">σ: {layer.statistics.std.toFixed(3)}</div>
+                                <div className="font-crimson font-medium text-purple-800">μ: {layer.statistics.mean.toFixed(3)}</div>
+                                <div className="font-crimson text-purple-600">σ: {layer.statistics.std.toFixed(3)}</div>
                               </div>
                               
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => toggleLayerVisibility(layer.info.name)}
-                                className="p-2 h-8 w-8 text-gray-400 hover:text-white"
+                                className="p-2 h-8 w-8 text-purple-600 hover:text-purple-800"
                               >
                                 {hiddenLayers.has(layer.info.name) ? (
                                   <EyeOff className="w-4 h-4" />
@@ -357,6 +364,7 @@ export function FeatureMapsVisualization({
             </Tabs>
           </CardContent>
         </Card>
+        </motion.div>
       </motion.div>
     </TooltipProvider>
   );

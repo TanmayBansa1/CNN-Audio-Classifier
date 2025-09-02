@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import * as d3 from 'd3';
-import { ZoomIn, ZoomOut, RotateCcw, Palette } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Palette, BarChart3 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
@@ -259,14 +259,29 @@ export function SpectrogramVisualization({
   return (
     <TooltipProvider>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className={className}
+        whileHover={{ y: -5 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className={`relative group ${className}`}
       >
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader className="pb-4">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-300/30 via-indigo-300/30 to-purple-300/30 rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+        
+        <Card className="relative bg-white/80 backdrop-blur-xl border border-blue-300/40 rounded-3xl shadow-lg">
+          <CardHeader className="pb-6">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold text-white">{title}</CardTitle>
+              <CardTitle className="flex items-center space-x-3 text-xl font-playfair font-medium">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full blur-lg opacity-75 animate-pulse"></div>
+                  <div className="relative w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <span className="bg-gradient-to-r from-purple-700 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  {title}
+                </span>
+              </CardTitle>
               
               <div className="flex items-center space-x-2">
                 {/* Zoom Controls */}
@@ -347,44 +362,77 @@ export function SpectrogramVisualization({
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 pt-0">
+          <CardContent className="p-8 pt-0">
             {/* Canvas Container */}
-            <div
-              ref={containerRef}
-              className="relative bg-black/30 rounded-lg overflow-hidden"
-              style={{ height: '400px' }}
-            >
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center z-10">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                </div>
-              )}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-300/20 to-indigo-300/20 rounded-2xl blur-xl"></div>
+              <div
+                ref={containerRef}
+                className="relative bg-gradient-to-br from-white/50 to-blue-50/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-blue-200/40"
+                style={{ height: '400px' }}
+              >
+                {isLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="text-center space-y-4">
+                      <div className="relative">
+                        <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 absolute inset-0"></div>
+                      </div>
+                      <p className="text-white font-medium">Rendering spectrogram...</p>
+                    </div>
+                  </div>
+                )}
               
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full object-contain cursor-crosshair"
-              />
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full object-contain cursor-crosshair"
+                />
+              </div>
             </div>
 
             {/* Info Display */}
             {processedData && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="text-gray-400">Frequency Bins</div>
-                  <div className="text-white font-medium">{processedData.freqBins}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-400">Time Frames</div>
-                  <div className="text-white font-medium">{processedData.timeBins}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-400">Min Value</div>
-                  <div className="text-white font-medium">{processedData.minValue.toFixed(1)}dB</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-400">Max Value</div>
-                  <div className="text-white font-medium">{processedData.maxValue.toFixed(1)}dB</div>
-                </div>
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+                <motion.div 
+                  className="text-center group"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-sm font-medium text-blue-300 mb-1">Frequency Bins</div>
+                  <div className="text-xl font-poppins font-bold text-transparent bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text">
+                    {processedData.freqBins}
+                  </div>
+                </motion.div>
+                <motion.div 
+                  className="text-center group"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-sm font-medium text-purple-300 mb-1">Time Frames</div>
+                  <div className="text-xl font-poppins font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text">
+                    {processedData.timeBins}
+                  </div>
+                </motion.div>
+                <motion.div 
+                  className="text-center group"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-sm font-medium text-green-300 mb-1">Min Value</div>
+                  <div className="text-xl font-poppins font-bold text-transparent bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text">
+                    {processedData.minValue.toFixed(1)}dB
+                  </div>
+                </motion.div>
+                <motion.div 
+                  className="text-center group"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-sm font-medium text-orange-300 mb-1">Max Value</div>
+                  <div className="text-xl font-poppins font-bold text-transparent bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text">
+                    {processedData.maxValue.toFixed(1)}dB
+                  </div>
+                </motion.div>
               </div>
             )}
           </CardContent>

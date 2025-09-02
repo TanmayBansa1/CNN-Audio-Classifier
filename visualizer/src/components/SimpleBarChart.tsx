@@ -13,8 +13,8 @@ export function SimpleBarChart({ data, className = '', height = 200 }: SimpleBar
   const maxValue = useMemo(() => Math.max(...data.map(d => d.value)), [data]);
 
   return (
-    <div className={`bg-black/30 rounded-lg p-4 ${className}`}>
-      <div className="flex items-end justify-between space-x-2" style={{ height: `${height}px` }}>
+    <div className={`bg-gradient-to-br from-orange-50/60 to-rose-50/60 backdrop-blur-sm rounded-2xl p-6 border border-orange-200/40 ${className}`}>
+      <div className="flex items-end justify-between space-x-3" style={{ height: `${height}px` }}>
         {data.map((item, index) => {
           const barHeight = (item.value / maxValue) * (height - 40); // Leave space for labels
           
@@ -24,16 +24,16 @@ export function SimpleBarChart({ data, className = '', height = 200 }: SimpleBar
                 initial={{ height: 0 }}
                 animate={{ height: barHeight }}
                 transition={{ delay: index * 0.1, duration: 0.6, ease: 'easeOut' }}
-                className="w-full rounded-t-md flex items-end justify-center relative"
+                className="w-full rounded-t-lg flex items-end justify-center relative shadow-sm"
                 style={{ backgroundColor: item.color }}
               >
-                <span className="text-white text-xs font-medium mb-1">
+                <span className="text-white text-xs font-crimson font-medium mb-2 drop-shadow-sm">
                   {item.value.toFixed(1)}%
                 </span>
               </motion.div>
               
-              <div className="mt-2 text-center">
-                <span className="text-xs text-gray-300 break-words leading-tight">
+              <div className="mt-3 text-center">
+                <span className="text-xs font-crimson text-gray-700 break-words leading-tight">
                   {item.label.replace(/_/g, ' ').toUpperCase()}
                 </span>
               </div>

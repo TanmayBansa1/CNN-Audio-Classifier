@@ -168,75 +168,127 @@ export function PredictionsDisplay({
   return (
     <TooltipProvider>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`space-y-6 ${className}`}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className={`space-y-8 ${className}`}
       >
         {/* Header Card with Overall Metrics */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-xl font-bold text-white">
-              <Target className="w-6 h-6" />
-              <span>Classification Results</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {(confidenceMetrics.maxConfidence * 100).toFixed(1)}%
+        <motion.div 
+          className="relative group"
+          whileHover={{ y: -5 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-purple-500/20 rounded-3xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-500"></div>
+          <Card className="relative bg-white backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-2xl font-playfair font-medium">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full blur-lg opacity-75 animate-pulse"></div>
+                  <div className="relative w-8 h-8 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full flex items-center justify-center">
+                    <Target className="w-5 h-5 text-white" />
+                  </div>
                 </div>
-                <div className="text-sm text-gray-400">Top Confidence</div>
-              </div>
+                <span className="bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text text-green-300">
+                  Classification Results
+                </span>
+              </CardTitle>
+            </CardHeader>
+          <CardContent className="p-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <motion.div 
+                className="text-center group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="relative mb-2">
+                  <div className="text-3xl font-poppins font-bold text-transparent bg-gradient-to-r from-emerald-400 to-blue-500 bg-clip-text">
+                    {(confidenceMetrics.maxConfidence * 100).toFixed(1)}%
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-emerald-300">Top Confidence</div>
+              </motion.div>
               
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${performanceStatus.color}`}>
-                  {performanceStatus.status}
+              <motion.div 
+                className="text-center group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="relative mb-2">
+                  <div className={`text-3xl font-poppins font-bold ${performanceStatus.color}`}>
+                    {performanceStatus.status}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-400">Model Confidence</div>
-              </div>
+                <div className="text-sm font-medium text-blue-300">Model Confidence</div>
+              </motion.div>
               
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {(confidenceMetrics.confidenceGap * 100).toFixed(1)}%
+              <motion.div 
+                className="text-center group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="relative mb-2">
+                  <div className="text-3xl font-poppins font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text">
+                    {(confidenceMetrics.confidenceGap * 100).toFixed(1)}%
+                  </div>
                 </div>
-                <div className="text-sm text-gray-400">Confidence Gap</div>
-              </div>
+                <div className="text-sm font-medium text-purple-300">Confidence Gap</div>
+              </motion.div>
               
-              <div className="text-center">
-                <div className="text-2xl font-bold text-white">
-                  {confidenceMetrics.entropy.toFixed(2)}
+              <motion.div 
+                className="text-center group"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              >
+                <div className="relative mb-2">
+                  <div className="text-3xl font-poppins font-bold text-transparent bg-gradient-to-r from-pink-400 to-rose-500 bg-clip-text">
+                    {confidenceMetrics.entropy.toFixed(2)}
+                  </div>
                 </div>
-                <div className="text-sm text-gray-400">Entropy</div>
-              </div>
+                <div className="text-sm font-medium text-pink-300">Entropy</div>
+              </motion.div>
             </div>
 
-            <div className="mt-4 p-3 bg-black/30 rounded-lg">
-              <p className="text-sm text-gray-300 text-center">
+            <div className="mt-6 p-4 bg-gradient-to-r from-orange-100/60 to-rose-100/60 backdrop-blur-sm rounded-xl border border-orange-200/50">
+              <p className="text-sm font-crimson text-gray-700 text-center font-medium">
                 {performanceStatus.description}
               </p>
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {/* Top Predictions List */}
-        <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-lg font-bold text-white">
-              <Award className="w-5 h-5" />
-              <span>Top Predictions</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {processedPredictions.map((pred, index) => (
-                <motion.div
-                  key={pred.class}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-4 p-4 bg-black/30 rounded-lg"
-                >
+        <motion.div 
+          className="relative group"
+          whileHover={{ y: -2 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-300/30 via-rose-300/30 to-amber-300/30 rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+          <Card className="relative bg-white/80 backdrop-blur-xl border border-orange-300/40 rounded-3xl shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-xl font-playfair font-medium">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-rose-500 rounded-full blur-lg opacity-60 animate-pulse"></div>
+                  <div className="relative w-7 h-7 bg-gradient-to-r from-orange-400 to-rose-500 rounded-full flex items-center justify-center">
+                    <Award className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <span className="bg-gradient-to-r from-orange-700 via-rose-700 to-amber-700 bg-clip-text text-transparent">
+                  Top Predictions
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {processedPredictions.map((pred, index) => (
+                  <motion.div
+                    key={pred.class}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center space-x-4 p-4 bg-gradient-to-r from-orange-100/70 to-rose-100/70 backdrop-blur-sm rounded-2xl border border-orange-200/50 shadow-sm"
+                  >
                   <div className="flex-shrink-0">
                     <div 
                       className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm"
@@ -248,11 +300,11 @@ export function PredictionsDisplay({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-white font-medium truncate">
+                      <h4 className="text-gray-800 font-playfair font-medium truncate">
                         {pred.class.replace(/_/g, ' ').toUpperCase()}
                       </h4>
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-white">
+                        <span className="text-lg font-playfair font-semibold text-gray-800">
                           {(pred.confidence * 100).toFixed(1)}%
                         </span>
                         <Tooltip>
@@ -279,42 +331,71 @@ export function PredictionsDisplay({
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {/* Visualization Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Bar Chart */}
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-lg font-bold text-white">
-                <BarChart3 className="w-5 h-5" />
-                <span>Confidence Distribution</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SimpleBarChart 
-                data={barChartData}
-                height={250}
-                className="w-full"
-              />
-            </CardContent>
-          </Card>
+          <motion.div 
+            className="relative group"
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-300/30 via-indigo-300/30 to-purple-300/30 rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border border-blue-300/40 rounded-3xl shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-3 text-xl font-playfair font-medium">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full blur-lg opacity-60 animate-pulse"></div>
+                    <div className="relative w-7 h-7 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <span className="bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 bg-clip-text text-transparent">
+                    Confidence Distribution
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <SimpleBarChart 
+                  data={barChartData}
+                  height={250}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
 
           {/* Pie Chart */}
-          <Card className="bg-white/10 backdrop-blur-sm border-white/20">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2 text-lg font-bold text-white">
-                <TrendingUp className="w-5 h-5" />
-                <span>Prediction Breakdown</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SimplePieChart 
-                data={pieChartData}
-                size={200}
-                className="w-full"
-              />
-            </CardContent>
-          </Card>
+          <motion.div 
+            className="relative group"
+            whileHover={{ y: -2 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-300/30 via-teal-300/30 to-cyan-300/30 rounded-3xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500"></div>
+            <Card className="relative bg-white/80 backdrop-blur-xl border border-emerald-300/40 rounded-3xl shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center space-x-3 text-xl font-playfair font-medium">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full blur-lg opacity-60 animate-pulse"></div>
+                    <div className="relative w-7 h-7 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-white" />
+                    </div>
+                  </div>
+                  <span className="bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700 bg-clip-text text-transparent">
+                    Prediction Breakdown
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <SimplePieChart 
+                  data={pieChartData}
+                  size={200}
+                  className="w-full"
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </motion.div>
     </TooltipProvider>

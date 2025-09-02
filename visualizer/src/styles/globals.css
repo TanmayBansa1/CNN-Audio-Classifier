@@ -4,8 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: var(--font-playfair), serif;
+  --font-elegant: var(--font-crimson), serif;
 }
 
 @theme inline {
@@ -113,6 +115,72 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Custom Animations */
+@keyframes gradient-x {
+  0%, 100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Custom Tailwind Utilities */
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-playfair {
+  font-family: var(--font-playfair);
+}
+
+.font-crimson {
+  font-family: var(--font-crimson);
+}
+
+.font-inter {
+  font-family: var(--font-inter);
+}
+
+.font-elegant {
+  font-family: var(--font-elegant);
+}
+
+/* Gradient Background Utilities */
+.bg-gradient-conic {
+  background: conic-gradient(var(--tw-gradient-stops));
 }
 
 @layer base {

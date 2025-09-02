@@ -57,16 +57,16 @@ export function SimplePieChart({ data, className = '', size = 200 }: SimplePieCh
   }, [data, size]);
 
   return (
-    <div className={`bg-black/30 rounded-lg p-4 ${className}`}>
+    <div className={`bg-gradient-to-br from-emerald-50/60 to-teal-50/60 backdrop-blur-sm rounded-2xl p-6 border border-emerald-200/40 ${className}`}>
       <div className="flex items-center justify-center">
-        <svg width={size} height={size} className="transform -rotate-90">
+        <svg width={size} height={size} className="transform -rotate-90 drop-shadow-sm">
           {paths.map((segment, index) => (
             <motion.path
               key={segment.name}
               d={segment.pathData}
               fill={segment.color}
-              stroke="rgba(255,255,255,0.1)"
-              strokeWidth="1"
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth="2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
@@ -77,17 +77,17 @@ export function SimplePieChart({ data, className = '', size = 200 }: SimplePieCh
       </div>
       
       {/* Legend */}
-      <div className="mt-4 space-y-2">
+      <div className="mt-6 space-y-3">
         {paths.map((segment) => (
           <div key={segment.name} className="flex items-center justify-between text-sm">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
               <div 
-                className="w-3 h-3 rounded-full"
+                className="w-4 h-4 rounded-full shadow-sm"
                 style={{ backgroundColor: segment.color }}
               />
-              <span className="text-gray-300">{segment.name}</span>
+              <span className="font-crimson text-gray-700">{segment.name}</span>
             </div>
-            <span className="text-white font-medium">
+            <span className="font-crimson font-medium text-gray-800">
               {segment.percentage.toFixed(1)}%
             </span>
           </div>

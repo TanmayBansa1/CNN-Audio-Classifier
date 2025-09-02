@@ -11,7 +11,7 @@ interface AudioPlayerProps {
   audioUrl: string;
   waveformData?: WaveformData;
   className?: string;
-  audioFile?: File; // Add optional file prop to determine type
+  audioFile?: File; // Keep this prop for compatibility
 }
 
 interface PlayerState {
@@ -24,7 +24,7 @@ interface PlayerState {
   useFallback: boolean;
 }
 
-export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile }: AudioPlayerProps) {
+export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   
@@ -44,190 +44,38 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
     setPlayerState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // Initialize WaveSurfer
+  // Initialize WaveSurfer - SIMPLIFIED WORKING VERSION
   useEffect(() => {
     if (!waveformRef.current || !audioUrl) return;
-    
-    // Capture the current ref value for cleanup
-    const currentWaveformContainer = waveformRef.current;
-
-    // Reset state
-    updatePlayerState({ 
-      isLoading: true, 
-      error: null, 
-      useFallback: false,
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0 
-    });
 
     const initializeWaveSurfer = async () => {
-      // Cleanup previous instance
-      if (wavesurferRef.current) {
-        try {
-          wavesurferRef.current.destroy();
-        } catch (error) {
-          // Ignore cleanup errors
-          console.warn('Error during cleanup:', error);
-        }
-        wavesurferRef.current = null;
-      }
-      
-      // Clear the container to remove any leftover visualizations
-      if (waveformRef.current) {
-        waveformRef.current.innerHTML = '';
-      }
-
-      // Try WebAudio first for better visualization, fallback to MediaElement if needed
-      const isMP3 = audioFile ? 
-        (audioFile.type.includes('mp3') || audioFile.type.includes('mpeg') || audioFile.name.toLowerCase().endsWith('.mp3')) :
-        (audioUrl.includes('mp3') || audioUrl.includes('mpeg'));
-
-      // Set a timeout to fallback to native audio if WaveSurfer takes too long
-      const fallbackTimeout: NodeJS.Timeout = setTimeout(() => {
-        console.warn('WaveSurfer taking too long, falling back to native audio');
-        updatePlayerState({
-          useFallback: true,
-          isLoading: false,
-          error: null,
-        });
-      }, 15000); // 15 second timeout for all files
-
-      // Function to retry with MediaElement backend for MP3 files
-      const retryWithMediaElement = async () => {
-        try {
-          console.log('Retrying with MediaElement backend...');
-          
-          // Clean up previous WaveSurfer instance first
-          if (wavesurferRef.current) {
-            try {
-              wavesurferRef.current.destroy();
-            } catch (cleanupError) {
-              console.warn('Error cleaning up previous WaveSurfer:', cleanupError);
-            }
-            wavesurferRef.current = null;
-          }
-          
-          // Clear the container to remove any leftover visualizations
-          if (waveformRef.current) {
-            waveformRef.current.innerHTML = '';
-          }
-          
-          const mediaElementConfig = {
-            container: waveformRef.current!,
-            waveColor: 'rgba(147, 197, 253, 0.8)',
-            progressColor: 'rgba(59, 130, 246, 1)',
-            cursorColor: 'rgba(249, 250, 251, 0.8)',
-            barWidth: 2,
-            barRadius: 1,
-            barGap: 1,
-            height: 400,
-            normalize: true,
-            backend: 'MediaElement' as const,
-            mediaControls: false,
-            fillParent: true,
-            scrollParent: false,
-            hideScrollbar: true,
-            autoCenter: true,
-            mediaType: 'audio' as const,
-            preload: 'metadata' as const,
-          };
-
-          const mediaElementWavesurfer = WaveSurfer.create(mediaElementConfig);
-          wavesurferRef.current = mediaElementWavesurfer;
-
-          // Set up events for MediaElement attempt
-          mediaElementWavesurfer.on('ready', () => {
-            clearTimeout(fallbackTimeout);
-            updatePlayerState({
-              duration: mediaElementWavesurfer.getDuration(),
-              isLoading: false,
-            });
-          });
-
-          mediaElementWavesurfer.on('audioprocess', () => {
-            updatePlayerState({
-              currentTime: mediaElementWavesurfer.getCurrentTime(),
-            });
-          });
-
-          mediaElementWavesurfer.on('timeupdate', () => {
-            updatePlayerState({
-              currentTime: mediaElementWavesurfer.getCurrentTime(),
-            });
-          });
-
-          mediaElementWavesurfer.on('play', () => {
-            updatePlayerState({ isPlaying: true });
-          });
-
-          mediaElementWavesurfer.on('pause', () => {
-            updatePlayerState({ isPlaying: false });
-          });
-
-          mediaElementWavesurfer.on('finish', () => {
-            updatePlayerState({ isPlaying: false, currentTime: 0 });
-          });
-
-          mediaElementWavesurfer.on('error', () => {
-            console.error('MediaElement also failed, falling back to native audio');
-            updatePlayerState({
-              useFallback: true,
-              isLoading: false,
-              error: null,
-            });
-          });
-
-          await mediaElementWavesurfer.load(audioUrl);
-        } catch (retryError) {
-          console.error('MediaElement retry failed:', retryError);
-          updatePlayerState({
-            useFallback: true,
-            isLoading: false,
-            error: null,
-          });
-        }
-      };
-
       try {
         updatePlayerState({ isLoading: true, error: null });
-        // Start with WebAudio for better waveform visualization
-        const backend: 'MediaElement' | 'WebAudio' = 'WebAudio';
-        
-        console.log(`Using ${backend} backend for ${isMP3 ? 'MP3' : 'other'} audio file:`, audioFile?.name ?? audioUrl);
 
-        const baseConfig = {
+        // Cleanup previous instance
+        if (wavesurferRef.current) {
+          wavesurferRef.current.destroy();
+          wavesurferRef.current = null;
+        }
+
+        const wavesurfer = WaveSurfer.create({
           container: waveformRef.current!,
-          waveColor: 'rgba(147, 197, 253, 0.8)', // blue-300 with opacity
-          progressColor: 'rgba(59, 130, 246, 1)', // blue-500
-          cursorColor: 'rgba(249, 250, 251, 0.8)', // gray-50 with opacity
-          barWidth: 2,
-          barRadius: 1,
+          waveColor: 'rgba(251, 113, 133, 0.8)',
+          progressColor: 'rgba(251, 146, 60, 1)',
+          cursorColor: 'rgba(239, 68, 68, 0.8)',
+          barWidth: 3,
+          barRadius: 2,
           barGap: 1,
           height: 400,
           normalize: true,
-          backend,
-          mediaControls: false,
-          fillParent: true,
-          scrollParent: false,
-          hideScrollbar: true,
-          autoCenter: true,
-        };
-
-        // Use WebAudio configuration for better waveform visualization
-        const config = {
-          ...baseConfig,
-          forceDecode: false, // Let browser handle decoding when possible
-          interact: true, // Enable waveform interaction
-        };
-
-        const wavesurfer = WaveSurfer.create(config);
+          backend: 'WebAudio', // Force WebAudio backend for better blob URL support
+          mediaControls: false
+        });
 
         wavesurferRef.current = wavesurfer;
 
         // Set up event listeners before loading
         wavesurfer.on('ready', () => {
-          clearTimeout(fallbackTimeout); // Clear timeout on successful load
           updatePlayerState({
             duration: wavesurfer.getDuration(),
             isLoading: false,
@@ -259,51 +107,41 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
         });
 
         wavesurfer.on('error', (error: Error) => {
-          clearTimeout(fallbackTimeout); // Clear timeout on error
-          console.error('WaveSurfer WebAudio error:', error);
-          
-          // For MP3 files, try MediaElement backend before giving up
-          if (isMP3 && backend === 'WebAudio') {
-            console.log('Retrying with MediaElement backend for MP3...');
-            void retryWithMediaElement();
-          } else {
-            console.error('Falling back to native audio');
-            updatePlayerState({
-              useFallback: true,
-              isLoading: false,
-              error: null,
-            });
+          // Ignore AbortError - this happens during cleanup and is normal
+          if (error.name === 'AbortError') {
+            return;
           }
+          console.error('WaveSurfer error:', error);
+          updatePlayerState({
+            error: 'Failed to load audio file. Please try a different format.',
+            isLoading: false,
+          });
         });
 
         // Load audio - use a try-catch for blob URL issues
         try {
           await wavesurfer.load(audioUrl);
         } catch (loadError) {
-          clearTimeout(fallbackTimeout); // Clear timeout on load error
-          console.error('Failed to load audio URL with WebAudio:', loadError);
-          
-          // For MP3 files, try MediaElement backend before giving up
-          if (isMP3 && backend === 'WebAudio') {
-            console.log('Retrying with MediaElement backend for MP3...');
-            void retryWithMediaElement();
-          } else {
-            console.error('Falling back to native audio');
-            updatePlayerState({
-              useFallback: true,
-              isLoading: false,
-              error: null,
-            });
+          // Ignore AbortError during cleanup
+          if (loadError instanceof Error && loadError.name === 'AbortError') {
+            return;
           }
+          console.error('Failed to load audio URL, falling back to native audio:', loadError);
+          updatePlayerState({
+            useFallback: true,
+            isLoading: false,
+          });
         }
 
       } catch (error) {
-        clearTimeout(fallbackTimeout); // Clear timeout on initialization error
+        // Ignore AbortError during cleanup
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
         console.error('Failed to initialize WaveSurfer, falling back to native audio:', error);
         updatePlayerState({
           useFallback: true,
           isLoading: false,
-          error: null,
         });
       }
     };
@@ -314,22 +152,20 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
     return () => {
       if (wavesurferRef.current) {
         try {
+          if (wavesurferRef.current.isPlaying()) {
+            wavesurferRef.current.pause();
+          }
           wavesurferRef.current.destroy();
         } catch (error) {
-          // Ignore AbortError during cleanup
+          // Ignore AbortError during cleanup - this is expected behavior
           if (error instanceof Error && error.name !== 'AbortError') {
             console.warn('Error during WaveSurfer cleanup:', error);
           }
         }
         wavesurferRef.current = null;
       }
-      
-      // Clear the container to remove any leftover visualizations
-      if (currentWaveformContainer) {
-        currentWaveformContainer.innerHTML = '';
-      }
     };
-  }, [audioUrl, audioFile, updatePlayerState]); // Added audioFile dependency
+  }, [audioUrl, updatePlayerState]); // Removed playerState.volume from dependencies
 
   // Fallback audio element effect
   useEffect(() => {
@@ -376,17 +212,9 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
-    // Load the audio with error handling
-    try {
-      audio.src = audioUrl;
-      audio.load();
-    } catch (error) {
-      console.error('Failed to set audio source:', error);
-      updatePlayerState({
-        error: 'Failed to load audio file - format may not be supported',
-        isLoading: false,
-      });
-    }
+    // Load the audio
+    audio.src = audioUrl;
+    audio.load();
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -454,9 +282,18 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
 
   if (playerState.error) {
     return (
-      <div className={`bg-red-900/50 border border-red-500/50 rounded-lg p-6 ${className}`}>
-        <p className="text-red-200 text-center">{playerState.error}</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`bg-gradient-to-br from-red-500/20 to-pink-600/20 backdrop-blur-sm rounded-2xl p-8 border border-red-400/30 ${className}`}
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+            <Volume2 className="w-8 h-8 text-red-400" />
+          </div>
+          <p className="text-red-200 text-lg font-medium">{playerState.error}</p>
+        </div>
+      </motion.div>
     );
   }
 
@@ -464,54 +301,87 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 ${className}`}
+      className={`bg-white/80 backdrop-blur-sm rounded-2xl p-8 border border-rose-400/20 shadow-xl hover:shadow-2xl transition-shadow duration-300 ${className}`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <h4 className="text-xl font-bold text-white">Audio Waveform</h4>
-          {playerState.useFallback && (
-            <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">
-              Fallback Mode
-            </span>
-          )}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-400 to-orange-500 rounded-full blur-lg opacity-60"></div>
+            <div className="relative w-12 h-12 bg-gradient-to-r from-rose-400 to-orange-500 rounded-full flex items-center justify-center">
+              <Volume2 className="w-6 h-6 text-white" />
+            </div>
+          </div>
+          <div>
+            <h4 className="text-xl font-playfair font-medium bg-gradient-to-r from-rose-700 via-orange-700 to-pink-700 bg-clip-text text-transparent">
+              Audio Waveform
+            </h4>
+            {playerState.useFallback && (
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 mt-1">
+                Fallback Mode
+              </span>
+            )}
+          </div>
         </div>
         {waveformData && (
-          <div className="text-sm text-gray-300">
-            {formatDuration(waveformData.duration)} • {waveformData.sample_rate}Hz
+          <div className="text-right">
+            <div className="text-sm text-gray-300">{formatDuration(waveformData.duration)}</div>
+            <div className="text-xs text-gray-400">{waveformData.sample_rate}Hz</div>
           </div>
         )}
       </div>
 
       {/* Waveform Container */}
-      <div className="relative mb-6 w-full">
+      <div className="relative mb-8">
         {playerState.isLoading && (
-          <div className="absolute inset-0 bg-black/30 rounded-lg flex items-center justify-center z-10 h-full">
-            <div className="animate-spin rounded-full h-[400px] w-[400px] border-b-2 border-blue-500"></div>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-rose-400/30 border-t-rose-400 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-orange-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+              </div>
+              <p className="text-white/80 font-medium">Loading waveform...</p>
+            </div>
           </div>
         )}
         
         {playerState.useFallback ? (
-          <div className="bg-black/30 rounded-lg overflow-hidden h-[400px] w-full flex items-center justify-center">
-            <div className="flex items-center space-x-1 w-full justify-center">
-              {Array.from({ length: 400 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-blue-400 rounded-sm animate-pulse"
-                  style={{
-                    height: `${20 + Math.random() * 400}px`,
-                    animationDelay: `${i * 30}ms`,
-                    animationDuration: '2s',
-                  }}
-                />
-              ))}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-300/15 to-orange-300/15 rounded-2xl blur-xl"></div>
+            <div className="relative bg-gradient-to-br from-white/10 to-orange-50/20 backdrop-blur-sm rounded-2xl overflow-hidden h-[400px] w-full flex items-center justify-center border border-orange-200/30">
+              <div className="flex items-center space-x-1 w-full justify-center px-4">
+                {Array.from({ length: 200 }).map((_, i) => {
+                  const height = 20 + Math.random() * 360;
+                  const delay = i * 20;
+                  return (
+                    <motion.div
+                      key={i}
+                      className="w-2 bg-gradient-to-t from-rose-400 to-orange-500 rounded-sm"
+                      style={{ height: `${height}px` }}
+                      animate={{
+                        scaleY: [1, 0.3, 1],
+                        opacity: [0.7, 1, 0.7],
+                      }}
+                      transition={{
+                        duration: 2,
+                        delay: delay / 1000,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (
-          <div
-            ref={waveformRef}
-            className="bg-black/30 rounded-lg overflow-hidden w-full"
-            style={{ minHeight: '400px', width: '100%' }}
-          />
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-300/15 to-orange-300/15 rounded-2xl blur-xl"></div>
+            <div
+              ref={waveformRef}
+              className="relative bg-gradient-to-br from-white/60 to-orange-50/80 rounded-2xl w-full border border-orange-200/40"
+              style={{ minHeight: '400px', width: '100%', overflow: 'visible' }}
+            />
+          </div>
         )}
       </div>
 
@@ -523,84 +393,108 @@ export function AudioPlayer({ audioUrl, waveformData, className = '', audioFile 
       />
 
       {/* Controls */}
-      <div className="space-y-4">
+        <div className="space-y-6">
         {/* Play Controls */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <button
+            <div className="flex items-center space-x-4">
+              <motion.button
               onClick={handlePlayPause}
               disabled={playerState.isLoading}
-              className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative w-14 h-14 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-400 to-orange-500 rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative w-full h-full bg-gradient-to-r from-rose-400 to-orange-500 rounded-full flex items-center justify-center text-white shadow-xl border border-white/30">
               {playerState.isPlaying ? (
-                <Pause className="w-5 h-5 ml-0.5" />
+                    <Pause className="w-6 h-6" />
               ) : (
-                <Play className="w-5 h-5 ml-0.5" />
+                    <Play className="w-6 h-6 ml-0.5" />
               )}
-            </button>
+                </div>
+              </motion.button>
             
-            <button
+              <motion.button
               onClick={handleRestart}
               disabled={playerState.isLoading}
-              className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-gray-300 hover:bg-white/20 hover:text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-12 h-12 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-600 hover:bg-white/50 hover:text-gray-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-orange-200/50"
             >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+                <RotateCcw className="w-5 h-5" />
+              </motion.button>
           </div>
 
           {/* Volume Control */}
-          <div className="flex items-center space-x-2">
-            <Volume2 className="w-4 h-4 text-gray-300" />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={playerState.volume}
-              onChange={handleVolumeChange}
-              className="w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-            />
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-400/20 to-orange-500/20 rounded-full blur-sm"></div>
+              <div className="relative w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+                <Volume2 className="w-4 h-4 text-gray-300" />
+              </div>
+            </div>
+            <div className="relative flex-1 max-w-24">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={playerState.volume}
+                onChange={handleVolumeChange}
+                className="w-full h-2 bg-gradient-to-r from-white/20 to-white/10 rounded-full appearance-none cursor-pointer backdrop-blur-sm border border-white/20"
+                style={{
+                  background: `linear-gradient(to right, 
+                    rgba(251, 113, 133, 0.8) 0%, 
+                    rgba(251, 146, 60, 0.8) ${playerState.volume * 100}%, 
+                    rgba(255, 255, 255, 0.2) ${playerState.volume * 100}%, 
+                    rgba(255, 255, 255, 0.2) 100%)`
+                }}
+              />
+            </div>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-gray-300">
-            <span>{formatDuration(playerState.currentTime)}</span>
-            <span>{formatDuration(playerState.duration)}</span>
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-300 font-medium">{formatDuration(playerState.currentTime)}</span>
+            <span className="text-gray-400">{formatDuration(playerState.duration)}</span>
           </div>
           
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <motion.div
-              className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercentage}%` }}
-              transition={{ duration: 0.1 }}
-            />
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-rose-300/20 to-orange-300/20 rounded-full blur-sm"></div>
+            <div className="relative w-full bg-white/20 backdrop-blur-sm rounded-full h-2 border border-white/30 overflow-hidden">
+              <motion.div
+                className="bg-gradient-to-r from-rose-400 to-orange-500 h-full rounded-full shadow-lg"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercentage}%` }}
+                transition={{ duration: 0.1 }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .slider::-webkit-slider-thumb {
+        input[type="range"]::-webkit-slider-thumb {
           appearance: none;
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+          background: linear-gradient(45deg, #fb7185, #fb923c);
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
         
-        .slider::-moz-range-thumb {
+        input[type="range"]::-moz-range-thumb {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+          background: linear-gradient(45deg, #fb7185, #fb923c);
           cursor: pointer;
           border: 2px solid white;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
       `}</style>
     </motion.div>

@@ -235,9 +235,9 @@ export function CustomHeatmap({
       className={`relative ${className}`}
     >
       {/* Title */}
-      <div className="text-center mb-2">
-        <h4 className="text-white font-medium">{title}</h4>
-        <div className="text-xs text-gray-400">
+      <div className="text-center mb-3">
+        <h4 className="font-playfair font-medium text-purple-800">{title}</h4>
+        <div className="text-xs font-crimson text-purple-600">
           {processedData.length}×{processedData[0]?.length ?? 0}
         </div>
       </div>
@@ -245,7 +245,7 @@ export function CustomHeatmap({
       {/* Heatmap Container */}
       <div
         ref={containerRef}
-        className="bg-black/30 rounded-lg p-4 relative"
+        className="bg-gradient-to-br from-purple-50/60 to-indigo-50/60 backdrop-blur-sm rounded-2xl p-4 relative border border-purple-200/40 shadow-sm"
       >
         <svg
           ref={svgRef}
@@ -256,7 +256,7 @@ export function CustomHeatmap({
 
         {/* Hover tooltip */}
         {hoveredCell && (
-          <div className="absolute top-2 left-2 bg-black/80 text-white p-2 rounded text-xs z-10">
+          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm text-purple-800 p-3 rounded-xl text-xs z-10 border border-purple-200/50 shadow-lg">
             <div>Position: ({hoveredCell.x}, {hoveredCell.y})</div>
             <div>Value: {hoveredCell.value.toFixed(4)}</div>
           </div>
@@ -264,18 +264,18 @@ export function CustomHeatmap({
       </div>
 
       {/* Statistics */}
-      <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-        <div className="text-center">
-          <div className="text-gray-400">Min</div>
-          <div className="text-white font-medium">{stats.min.toFixed(3)}</div>
+      <div className="mt-4 grid grid-cols-3 gap-3 text-xs">
+        <div className="text-center bg-purple-100/60 backdrop-blur-sm rounded-xl p-3 border border-purple-200/40">
+          <div className="font-crimson text-purple-600">Min</div>
+          <div className="font-playfair font-medium text-purple-800">{stats.min.toFixed(3)}</div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400">Mean</div>
-          <div className="text-white font-medium">{stats.mean.toFixed(3)}</div>
+        <div className="text-center bg-indigo-100/60 backdrop-blur-sm rounded-xl p-3 border border-indigo-200/40">
+          <div className="font-crimson text-indigo-600">Mean</div>
+          <div className="font-playfair font-medium text-indigo-800">{stats.mean.toFixed(3)}</div>
         </div>
-        <div className="text-center">
-          <div className="text-gray-400">Max</div>
-          <div className="text-white font-medium">{stats.max.toFixed(3)}</div>
+        <div className="text-center bg-blue-100/60 backdrop-blur-sm rounded-xl p-3 border border-blue-200/40">
+          <div className="font-crimson text-blue-600">Max</div>
+          <div className="font-playfair font-medium text-blue-800">{stats.max.toFixed(3)}</div>
         </div>
       </div>
     </motion.div>

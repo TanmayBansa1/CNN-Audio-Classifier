@@ -47,86 +47,175 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-rose-50 to-amber-50 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-200/30 via-rose-200/30 to-amber-200/30 animate-gradient-x"></div>
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-rose-300/20 rounded-full filter blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-orange-300/15 rounded-full filter blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-conic from-transparent via-rose-300/8 to-transparent rounded-full animate-spin-slow"></div>
+      </div>
+      
       {/* Header */}
-      <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-orange-200/30 bg-white/40 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center space-x-3"
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="flex items-center space-x-4"
             >
-              <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Image src="/logo.png" alt="SunoAI" width={80} height={80} className='rounded-lg'/>
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-rose-300 to-orange-400 rounded-2xl blur-lg opacity-60 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-rose-400 to-orange-400 rounded-2xl p-1 shadow-lg">
+                  <Image src="/logo.png" alt="SunoAI" width={56} height={56} className='rounded-xl'/>
+                </div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">SunoAI</h1>
-                <p className="text-sm text-gray-300">Audio CNN Visualizer</p>
+                <h1 className="text-2xl font-playfair font-medium bg-gradient-to-r from-rose-700 via-orange-600 to-amber-600 bg-clip-text text-transparent">
+                  SunoAI
+                </h1>
+                <p className="text-sm font-crimson text-rose-600/70 italic">Audio CNN Visualizer</p>
               </div>
             </motion.div>
             
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
               className="text-right"
             >
-              <p className="text-xs text-gray-400">50 Audio Classes • ESC-50 Dataset</p>
+              <div className="bg-white/60 backdrop-blur-sm rounded-xl px-4 py-2 border border-orange-200/50 shadow-sm">
+                <p className="text-xs font-medium text-orange-700">50 Audio Classes</p>
+                <p className="text-xs text-rose-600/60">ESC-50 Dataset</p>
+              </div>
             </motion.div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-white mb-4"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="mb-8"
           >
-            Professional Audio Analysis
-          </motion.h2>
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-rose-200/40 to-orange-200/40 border border-rose-300/40 backdrop-blur-sm mb-6">
+              <span className="text-sm font-crimson text-rose-700">🎵 AI-Powered Audio Analysis</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-playfair font-medium mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-rose-800 via-orange-700 to-amber-700 bg-clip-text text-transparent">
+                Don&apos;t just hear it
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-orange-700 via-rose-700 to-pink-700 bg-clip-text text-transparent italic">
+                Listen to It!
+              </span>
+            </h2>
+          </motion.div>
+          
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-gray-300 max-w-3xl mx-auto"
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            className="text-lg md:text-xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-crimson"
           >
-            Upload your audio file to see real-time CNN feature maps, spectrograms, 
-            and classification results from our ResNet-based audio classifier.
+            Upload your audio file to witness{" "}
+            <span className="text-transparent bg-gradient-to-r from-rose-600 to-orange-600 bg-clip-text font-semibold italic">
+              real-time CNN feature maps
+            </span>
+            , interactive spectrograms, and intelligent classification results from our refined{" "}
+            <span className="text-transparent bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text font-semibold italic">
+              ResNet-based audio classifier
+            </span>
+            .
           </motion.p>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-6 mt-12 text-sm text-gray-600"
+          >
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+              <span className="font-crimson">Real-time Processing</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse delay-200"></div>
+              <span className="font-crimson">CNN Visualization</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse delay-400"></div>
+              <span className="font-crimson">50 Audio Classes</span>
+            </div>
+          </motion.div>
         </div>
 
         {/* File Upload Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-12"
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.6 }}
+          className="mb-16"
         >
-          <FileUpload 
-            onFileSelect={handleFileSelect}
-            isLoading={analysisState.isLoading}
-          />
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-3xl blur-xl"></div>
+            <div className="relative">
+              <FileUpload 
+                onFileSelect={handleFileSelect}
+                isLoading={analysisState.isLoading}
+              />
+            </div>
+          </div>
         </motion.div>
 
         {/* Loading State */}
         {analysisState.isLoading && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="text-center py-16"
           >
-            <div className="inline-flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <span className="text-white text-lg">Analyzing audio with SunoAI...</span>
-            </div>
-            <div className="mt-4 max-w-md mx-auto bg-gray-800 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${analysisState.progress}%` }}
-              />
+            <div className="relative max-w-md mx-auto">
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-300/20 to-orange-300/20 rounded-2xl blur-xl"></div>
+              <div className="relative bg-white/60 backdrop-blur-xl rounded-2xl p-8 border border-rose-200/50 shadow-lg">
+                <div className="flex flex-col items-center space-y-6">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-rose-200/40"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-rose-500 absolute inset-0"></div>
+                  </div>
+                  <div className="text-center">
+                    <h3 className="text-xl font-playfair font-medium text-rose-800 mb-2">
+                      Analyzing Audio with SunoAI
+                    </h3>
+                    <p className="text-sm font-crimson text-gray-600 italic">
+                      Processing neural network layers...
+                    </p>
+                  </div>
+                  <div className="w-full space-y-2">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span className="font-crimson">Progress</span>
+                      <span className="font-medium">{Math.round(analysisState.progress)}%</span>
+                    </div>
+                    <div className="w-full bg-orange-100/60 rounded-full h-3 overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-gradient-to-r from-rose-400 via-orange-400 to-amber-400 rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${analysisState.progress}%` }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
@@ -134,12 +223,23 @@ export default function HomePage() {
         {/* Error State */}
         {analysisState.error && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
             className="text-center py-12"
           >
-            <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-6 max-w-md mx-auto">
-              <p className="text-red-200">Analysis failed: {analysisState.error}</p>
+            <div className="relative max-w-md mx-auto">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-200/30 to-rose-200/30 rounded-2xl blur-xl"></div>
+              <div className="relative bg-white/70 backdrop-blur-xl border border-red-300/40 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center space-x-3 mb-3">
+                  <div className="w-6 h-6 bg-red-400 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">!</span>
+                  </div>
+                  <h3 className="text-lg font-playfair font-medium text-red-700">Analysis Failed</h3>
+                </div>
+                <p className="text-red-600 text-sm font-crimson">{analysisState.error}</p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -149,7 +249,8 @@ export default function HomePage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-8"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="space-y-12"
           >
             {/* Enhanced Predictions Display */}
             <PredictionsDisplay 
@@ -158,11 +259,12 @@ export default function HomePage() {
             />
 
             {/* Audio Analysis Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
               {/* Audio Player with Waveform */}
               <AudioPlayer 
                 audioUrl={audioFile.url}
                 waveformData={analysisState.result.waveform}
+                audioFile={audioFile.file}
                 className=""
               />
               
@@ -175,10 +277,16 @@ export default function HomePage() {
             </div>
 
             {/* CNN Feature Maps Visualization */}
-            <FeatureMapsVisualization 
-              featureMaps={analysisState.result.visualization}
-              className=""
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <FeatureMapsVisualization 
+                featureMaps={analysisState.result.visualization}
+                className=""
+              />
+            </motion.div>
           </motion.div>
         )}
       </main>
