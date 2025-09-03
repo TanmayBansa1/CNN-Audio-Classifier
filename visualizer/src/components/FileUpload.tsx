@@ -159,7 +159,7 @@ export function FileUpload({ onFileSelect, isLoading }: FileUploadProps) {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Maximum file size: 50MB
+                    Maximum file size: 10MB
                   </motion.p>
                 </div>
               </motion.div>

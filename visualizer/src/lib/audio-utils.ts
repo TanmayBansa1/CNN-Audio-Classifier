@@ -39,12 +39,12 @@ export function validateAudioFile(file: File): { isValid: boolean; error?: strin
     };
   }
   
-  // Check file size (50MB limit)
-  const maxSize = 50 * 1024 * 1024;
+  // Check file size (10MB limit)
+  const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: 'File size must be less than 50MB'
+      error: 'File size must be less than 10MB'
     };
   }
   
