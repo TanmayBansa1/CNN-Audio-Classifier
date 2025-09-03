@@ -1,16 +1,6 @@
-'use client';
-
+'use client'
 import { motion } from "framer-motion";
-import dynamic from 'next/dynamic';
-
-// Dynamically import Spline to avoid SSR issues
-const Spline = dynamic(
-  () => import('@splinetool/react-spline'),
-  {
-    ssr: false,
-    loading: () => <div className="h-full w-full bg-gradient-to-br from-rose-50 to-orange-50 animate-pulse rounded-lg" />
-  }
-);
+import HeroModel from "./HeroModel";
 
 export default function Hero() {
     return (
@@ -76,10 +66,7 @@ export default function Hero() {
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
               className="h-[400px] w-full md:h-[500px] lg:h-[600px]"
             >
-              <Spline
-                scene="https://prod.spline.design/LVQY19Dc5t6gycMp/scene.splinecode"
-                className="h-full w-full"
-              />
+              <HeroModel />
             </motion.div>
           </div>
         </div>
