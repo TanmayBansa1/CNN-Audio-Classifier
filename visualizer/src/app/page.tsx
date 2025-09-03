@@ -14,6 +14,10 @@ import Header from '~/components/Header';
 import Hero from '~/components/Hero';
 import LoadingState from '~/components/LoadingState';
 import Error from '~/components/Error';
+import Architecture3D from '~/components/Architecture3D';
+import ArchitectureExplainer from '~/components/ArchitectureExplainer';
+import StatsHighlight from '~/components/StatsHighlight';
+import CTA from '~/components/CTA';
 
 export default function HomePage() {
   const [audioFile, setAudioFile] = useState<AudioFile | null>(null);
@@ -69,8 +73,19 @@ export default function HomePage() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <Hero></Hero>
 
+
+        {/* Showcase Sections */}
+        <div className="space-y-8 mb-16">
+          <CTA onClick={() => {
+            const el = document.getElementById('upload-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }} />
+          <Architecture3D />
+          <ArchitectureExplainer />
+          <StatsHighlight />
+        </div>
         {/* File Upload Section */}
-        <motion.div
+        <motion.div id="upload-section"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.6 }}
