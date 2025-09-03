@@ -6,7 +6,7 @@ export default function StatsHighlight({ className = "" }: { className?: string 
   const stats = [
     { label: "Classes", value: "50", sub: "ESC-50" },
     { label: "Latency", value: "~3.2s", sub: "on 30s clip" },
-    { label: "Params", value: "3.1M", sub: "compact CNN" },
+    { label: "Params", value: "21.3M", sub: "convolutional neural network" },
     { label: "Accuracy", value: "88%", sub: "val set" },
   ];
 
