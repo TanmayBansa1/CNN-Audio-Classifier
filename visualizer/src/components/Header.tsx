@@ -41,12 +41,14 @@ export default function Header() {
                 transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                 className="text-right"
               >
-                <div className="rounded-xl border border-orange-200/50 bg-white/60 px-4 py-2 shadow-sm backdrop-blur-sm">
-                  <p className="text-xs font-medium text-orange-700">
-                    50 Audio Classes
-                  </p>
-                  <p className="text-xs text-rose-600/60">ESC-50 Dataset</p>
-                </div>
+                <a href="https://github.com/karolpiczak/ESC-50/tree/master/audio" target="_blank" rel="noopener noreferrer">
+                  <div className="rounded-xl border border-orange-200/50 bg-white/60 px-4 py-2 shadow-sm backdrop-blur-sm">
+                    <p className="text-xs font-medium text-orange-700">
+                      50 Audio Classes
+                    </p>
+                    <p className="text-xs text-rose-600/60">ESC-50 Dataset</p>
+                  </div>
+                </a>
               </motion.div>
             </div>
           </div>
