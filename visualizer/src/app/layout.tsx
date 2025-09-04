@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
+  weight: ["600", "700"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -22,7 +22,7 @@ const playfair = Playfair_Display({
 const crimson = Crimson_Text({
   subsets: ["latin"],
   variable: "--font-crimson",
-  weight: ["400", "600"],
+  weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -30,7 +30,7 @@ const crimson = Crimson_Text({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  weight: ["300", "400", "500"],
+  weight: ["400", "500"],
   display: "swap",
 });
 
