@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, Volume2 } from 'lucide-react';
-import WaveSurfer from 'wavesurfer.js';
+import type WaveSurfer from 'wavesurfer.js';
 import type { WaveformData } from '~/lib/types';
 import { formatDuration } from '~/lib/audio-utils';
 
@@ -27,6 +27,8 @@ interface PlayerState {
 function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
   
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
@@ -40,13 +42,28 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
 
   const fallbackAudioRef = useRef<HTMLAudioElement>(null);
 
+  // Visibility observer to lazy-initialize WaveSurfer only when visible
+  useEffect(() => {
+    if (!waveformRef.current) return;
+    const el = waveformRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsVisible(entry?.isIntersecting ?? false);
+      },
+      { root: null, rootMargin: '100px', threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.unobserve(el);
+  }, []);
+
   const updatePlayerState = useCallback((updates: Partial<PlayerState>) => {
     setPlayerState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // Initialize WaveSurfer - SIMPLIFIED WORKING VERSION
+  // Initialize WaveSurfer lazily when visible
   useEffect(() => {
-    if (!waveformRef.current || !audioUrl) return;
+    if (!waveformRef.current || !audioUrl || !isVisible) return;
 
     const initializeWaveSurfer = async () => {
       try {
@@ -57,6 +74,9 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
           wavesurferRef.current.destroy();
           wavesurferRef.current = null;
         }
+
+        // Dynamic import to keep it out of initial bundle
+        const { default: WaveSurfer } = await import('wavesurfer.js');
 
         const wavesurfer = WaveSurfer.create({
           container: waveformRef.current!,
@@ -74,6 +94,15 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
 
         wavesurferRef.current = wavesurfer;
 
+        // Throttle time updates to ~12Hz
+        let lastTs = 0;
+        const throttledUpdate = () => {
+          const now = performance.now();
+          if (now - lastTs < 83) return; // ~12 fps
+          lastTs = now;
+          updatePlayerState({ currentTime: wavesurfer.getCurrentTime() });
+        };
+
         // Set up event listeners before loading
         wavesurfer.on('ready', () => {
           updatePlayerState({
@@ -82,17 +111,9 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
           });
         });
 
-        wavesurfer.on('audioprocess', () => {
-          updatePlayerState({
-            currentTime: wavesurfer.getCurrentTime(),
-          });
-        });
+        wavesurfer.on('audioprocess', throttledUpdate);
 
-        wavesurfer.on('timeupdate', () => {
-          updatePlayerState({
-            currentTime: wavesurfer.getCurrentTime(),
-          });
-        });
+        wavesurfer.on('timeupdate', throttledUpdate);
 
         wavesurfer.on('play', () => {
           updatePlayerState({ isPlaying: true });
@@ -117,6 +138,20 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
             isLoading: false,
           });
         });
+
+        // Debounced resize (re-render waveform buffer)
+        // Debounced resize handler stored for cleanup
+        let raf = 0;
+        const handleResize = () => {
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => {
+            try {
+              (wavesurfer as unknown as { drawBuffer?: () => void }).drawBuffer?.();
+            } catch {}
+          });
+        };
+        resizeHandlerRef.current = handleResize;
+        window.addEventListener('resize', handleResize);
 
         // Load audio - use a try-catch for blob URL issues
         try {
@@ -164,8 +199,12 @@ function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProp
         }
         wavesurferRef.current = null;
       }
+      if (resizeHandlerRef.current) {
+        window.removeEventListener('resize', resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
     };
-  }, [audioUrl, updatePlayerState]); // Removed playerState.volume from dependencies
+  }, [audioUrl, updatePlayerState, isVisible]);
 
   // Fallback audio element effect
   useEffect(() => {
