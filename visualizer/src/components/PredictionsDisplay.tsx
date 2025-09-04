@@ -1,14 +1,23 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Award, BarChart3, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Progress } from '~/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
 import type { Prediction } from '~/lib/types';
-import { SimpleBarChart } from './SimpleBarChart';
-import { SimplePieChart } from './SimplePieChart';
+import dynamic from 'next/dynamic';
+
+const SimpleBarChart = dynamic(() => import('./SimpleBarChart'), {
+  ssr: false,
+  loading: () => <div className="h-48 bg-gray-100 rounded animate-pulse" />
+});
+
+const SimplePieChart = dynamic(() => import('./SimplePieChart'), {
+  ssr: false,
+  loading: () => <div className="h-48 bg-gray-100 rounded animate-pulse" />
+});
 
 interface PredictionsDisplayProps {
   predictions: Prediction[];
@@ -40,7 +49,7 @@ const CHART_COLORS = [
   '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
 ];
 
-export function PredictionsDisplay({ 
+function PredictionsDisplay({ 
   predictions, 
   _allClassProbabilities,
   className = '' 
@@ -401,3 +410,5 @@ export function PredictionsDisplay({
     </TooltipProvider>
   );
 }
+
+export default memo(PredictionsDisplay);

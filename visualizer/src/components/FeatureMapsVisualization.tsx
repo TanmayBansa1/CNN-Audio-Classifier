@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { memo, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Layers, Info } from 'lucide-react';
 import { Button } from '~/components/ui/button';
@@ -45,7 +45,7 @@ const LAYER_DISPLAY_NAMES: Record<string, string> = {
   'layer5': 'Layer 5 (ResBlocks)',
 };
 
-export function FeatureMapsVisualization({ 
+function FeatureMapsVisualization({ 
   featureMaps, 
   className = '' 
 }: FeatureMapsVisualizationProps) {
@@ -369,3 +369,5 @@ export function FeatureMapsVisualization({
     </TooltipProvider>
   );
 }
+
+export default memo(FeatureMapsVisualization);

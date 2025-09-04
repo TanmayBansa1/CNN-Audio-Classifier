@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Html, OrbitControls, Text } from "@react-three/drei";
 import type { Group } from "three";
 import ResidualBlockModal from "./ResidualBlockModal";
+import { webglManager } from "~/lib/webgl-context";
 
 type LayerSpec = {
   key: string;
@@ -97,8 +98,69 @@ function LayerBox({ spec, onClick }: { spec: LayerSpec; onClick?: () => void }) 
 }
 
 export default function Architecture3D({ className = "" }: { className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [canRender, setCanRender] = useState(false);
+
+  // Intersection Observer to only render when visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry?.isIntersecting ?? false;
+        setIsVisible(visible);
+        
+        if (visible) {
+          const canUseWebGL = webglManager.register('architecture3d', 0);
+          setCanRender(canUseWebGL);
+        } else {
+          webglManager.unregister('architecture3d');
+          setCanRender(false);
+        }
+      },
+      { 
+        threshold: 0.1,
+        rootMargin: '50px'
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      webglManager.unregister('architecture3d');
+    };
+  }, []);
+
+  // Listen for WebGL context restoration
+  useEffect(() => {
+    const handleContextRestored = (event: CustomEvent<{ canvasId: string }>) => {
+      if (event.detail.canvasId === 'architecture3d' && isVisible) {
+        setCanRender(true);
+        console.log('Architecture3D: Context restored, can render again');
+      }
+    };
+
+    window.addEventListener('webgl-context-restored', handleContextRestored as EventListener);
+    
+    return () => {
+      window.removeEventListener('webgl-context-restored', handleContextRestored as EventListener);
+    };
+  }, [isVisible]);
+
+  // Cleanup Three.js when component unmounts
+  useEffect(() => {
+    return () => {
+      // Force garbage collection of Three.js objects when component unmounts
+      if (typeof window !== 'undefined' && window.gc) {
+        window.gc();
+      }
+    };
+  }, []);
+
   const specs: LayerSpec[] = useMemo(() => {
-    // Based on model.py architecture with detailed parameter counts
+
     return [
       {
         key: "input",
@@ -225,7 +287,7 @@ export default function Architecture3D({ className = "" }: { className?: string 
   }
 
   return (
-    <div className={className}>
+    <div className={className} ref={containerRef}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -242,22 +304,36 @@ export default function Architecture3D({ className = "" }: { className?: string 
           </div>
         </div>
         <div className="h-[420px] w-full md:h-[520px]">
-          <Canvas 
-            camera={{ position: [5, 3, 9], fov: 50 }} 
-            shadows
-            gl={{ antialias: true, alpha: true }}
-          >
-            {/* Enhanced lighting setup */}
-            <ambientLight intensity={0.4} />
+          {isVisible && canRender ? (
+            <Canvas 
+              camera={{ position: [5, 3, 9], fov: 50 }} 
+              shadows
+              dpr={[1, 2]} // Clamp device pixel ratio for performance
+              performance={{ min: 0.5 }} // Allow frame rate to drop to maintain performance
+              gl={{ 
+                antialias: false, // Disable antialias for performance
+                alpha: true,
+                powerPreference: "high-performance",
+                stencil: false,
+                depth: true
+              }}
+            >
+            {/* Optimized lighting setup */}
+            <ambientLight intensity={0.5} />
             <directionalLight 
               position={[10, 10, 5]} 
-              intensity={1.2} 
+              intensity={1.0} 
               castShadow 
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
+              shadow-mapSize-width={1024}
+              shadow-mapSize-height={1024}
+              shadow-camera-near={1}
+              shadow-camera-far={50}
+              shadow-camera-left={-20}
+              shadow-camera-right={20}
+              shadow-camera-top={20}
+              shadow-camera-bottom={-20}
             />
-            <directionalLight position={[-5, -4, -3]} intensity={0.6} />
-            <pointLight position={[8, 4, 8]} intensity={0.8} color="#fbbf24" />
+            <directionalLight position={[-5, -4, -3]} intensity={0.4} />
             
             {/* Fog for depth */}
             <fog attach="fog" args={["#fef7ed", 15, 35]} />
@@ -328,6 +404,14 @@ export default function Architecture3D({ className = "" }: { className?: string 
               enableDamping={true}
             />
           </Canvas>
+          ) : (
+            <div className="flex items-center justify-center h-full bg-white/20 rounded-2xl">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-white/30 rounded-full mx-auto animate-pulse"></div>
+                <p className="text-gray-600">3D Architecture Loading...</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Details panel */}

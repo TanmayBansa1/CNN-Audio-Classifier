@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Play, Pause, RotateCcw, Volume2 } from 'lucide-react';
-import WaveSurfer from 'wavesurfer.js';
+import type WaveSurfer from 'wavesurfer.js';
 import type { WaveformData } from '~/lib/types';
 import { formatDuration } from '~/lib/audio-utils';
 
@@ -24,9 +24,12 @@ interface PlayerState {
   useFallback: boolean;
 }
 
-export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
+function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
+  const prefersReducedMotion = useReducedMotion();
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
   
   const [playerState, setPlayerState] = useState<PlayerState>({
     isPlaying: false,
@@ -40,13 +43,28 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
 
   const fallbackAudioRef = useRef<HTMLAudioElement>(null);
 
+  // Visibility observer to lazy-initialize WaveSurfer only when visible
+  useEffect(() => {
+    if (!waveformRef.current) return;
+    const el = waveformRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsVisible(entry?.isIntersecting ?? false);
+      },
+      { root: null, rootMargin: '100px', threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.unobserve(el);
+  }, []);
+
   const updatePlayerState = useCallback((updates: Partial<PlayerState>) => {
     setPlayerState(prev => ({ ...prev, ...updates }));
   }, []);
 
-  // Initialize WaveSurfer - SIMPLIFIED WORKING VERSION
+  // Initialize WaveSurfer lazily when visible
   useEffect(() => {
-    if (!waveformRef.current || !audioUrl) return;
+    if (!waveformRef.current || !audioUrl || !isVisible) return;
 
     const initializeWaveSurfer = async () => {
       try {
@@ -57,6 +75,9 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
           wavesurferRef.current.destroy();
           wavesurferRef.current = null;
         }
+
+        // Dynamic import to keep it out of initial bundle
+        const { default: WaveSurfer } = await import('wavesurfer.js');
 
         const wavesurfer = WaveSurfer.create({
           container: waveformRef.current!,
@@ -74,6 +95,15 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
 
         wavesurferRef.current = wavesurfer;
 
+        // Throttle time updates to ~12Hz
+        let lastTs = 0;
+        const throttledUpdate = () => {
+          const now = performance.now();
+          if (now - lastTs < 83) return; // ~12 fps
+          lastTs = now;
+          updatePlayerState({ currentTime: wavesurfer.getCurrentTime() });
+        };
+
         // Set up event listeners before loading
         wavesurfer.on('ready', () => {
           updatePlayerState({
@@ -82,17 +112,9 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
           });
         });
 
-        wavesurfer.on('audioprocess', () => {
-          updatePlayerState({
-            currentTime: wavesurfer.getCurrentTime(),
-          });
-        });
+        wavesurfer.on('audioprocess', throttledUpdate);
 
-        wavesurfer.on('timeupdate', () => {
-          updatePlayerState({
-            currentTime: wavesurfer.getCurrentTime(),
-          });
-        });
+        wavesurfer.on('timeupdate', throttledUpdate);
 
         wavesurfer.on('play', () => {
           updatePlayerState({ isPlaying: true });
@@ -117,6 +139,20 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
             isLoading: false,
           });
         });
+
+        // Debounced resize (re-render waveform buffer)
+        // Debounced resize handler stored for cleanup
+        let raf = 0;
+        const handleResize = () => {
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => {
+            try {
+              (wavesurfer as unknown as { drawBuffer?: () => void }).drawBuffer?.();
+            } catch {}
+          });
+        };
+        resizeHandlerRef.current = handleResize;
+        window.addEventListener('resize', handleResize);
 
         // Load audio - use a try-catch for blob URL issues
         try {
@@ -164,8 +200,12 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
         }
         wavesurferRef.current = null;
       }
+      if (resizeHandlerRef.current) {
+        window.removeEventListener('resize', resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
     };
-  }, [audioUrl, updatePlayerState]); // Removed playerState.volume from dependencies
+  }, [audioUrl, updatePlayerState, isVisible]);
 
   // Fallback audio element effect
   useEffect(() => {
@@ -347,29 +387,10 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
         {playerState.useFallback ? (
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-rose-300/15 to-orange-300/15 rounded-2xl blur-xl"></div>
-            <div className="relative bg-gradient-to-br from-white/10 to-orange-50/20 backdrop-blur-sm rounded-2xl overflow-hidden h-[400px] w-full flex items-center justify-center border border-orange-200/30">
-              <div className="flex items-center space-x-1 w-full justify-center px-4">
-                {Array.from({ length: 200 }).map((_, i) => {
-                  const height = 20 + Math.random() * 360;
-                  const delay = i * 20;
-                  return (
-                    <motion.div
-                      key={i}
-                      className="w-2 bg-gradient-to-t from-rose-400 to-orange-500 rounded-sm"
-                      style={{ height: `${height}px` }}
-                      animate={{
-                        scaleY: [1, 0.3, 1],
-                        opacity: [0.7, 1, 0.7],
-                      }}
-                      transition={{
-                        duration: 2,
-                        delay: delay / 1000,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    />
-                  );
-                })}
+            <div className="relative bg-gradient-to-br from-white/10 to-orange-50/20 backdrop-blur-sm rounded-2xl overflow-hidden h-[400px] w-full border border-orange-200/30">
+              {/* CSS-only animated placeholder to keep DOM minimal */}
+              <div className="absolute inset-0">
+                <div className="h-full w-full placeholder-bars" />
               </div>
             </div>
           </div>
@@ -400,11 +421,11 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
               <motion.button
               onClick={handlePlayPause}
               disabled={playerState.isLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
                 className="relative w-14 h-14 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-rose-400 to-orange-500 rounded-full blur-lg opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className={`absolute inset-0 bg-gradient-to-r from-rose-400 to-orange-500 rounded-full blur-lg ${prefersReducedMotion ? 'opacity-40' : 'opacity-60 group-hover:opacity-100 transition-opacity duration-300'}`}></div>
                 <div className="relative w-full h-full bg-gradient-to-r from-rose-400 to-orange-500 rounded-full flex items-center justify-center text-white shadow-xl border border-white/30">
               {playerState.isPlaying ? (
                     <Pause className="w-6 h-6" />
@@ -417,8 +438,8 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
               <motion.button
               onClick={handleRestart}
               disabled={playerState.isLoading}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+                whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
                 className="w-12 h-12 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-600 hover:bg-white/50 hover:text-gray-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-orange-200/50"
             >
                 <RotateCcw className="w-5 h-5" />
@@ -468,7 +489,7 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
                 className="bg-gradient-to-r from-rose-400 to-orange-500 h-full rounded-full shadow-lg"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercentage}%` }}
-                transition={{ duration: 0.1 }}
+                transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.1 }}
               />
             </div>
           </div>
@@ -476,6 +497,29 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
       </div>
 
       <style jsx>{`
+        @keyframes barsMove {
+          0% { background-position: 0 0, 0 0, 0 0; }
+          50% { background-position: 20px 0, -15px 0, 10px 0; }
+          100% { background-position: 0 0, 0 0, 0 0; }
+        }
+
+        .placeholder-bars {
+          /* Three layered repeating-gradients to simulate bars */
+          background-image:
+            repeating-linear-gradient( to top, rgba(251,113,133,0.6) 0 2px, transparent 2px 6px ),
+            repeating-linear-gradient( to top, rgba(251,146,60,0.6) 0 3px, transparent 3px 9px ),
+            repeating-linear-gradient( to top, rgba(255,255,255,0.35) 0 4px, transparent 4px 12px );
+          background-size: 8px 100%, 10px 100%, 12px 100%;
+          background-position: 0 0, 10px 0, 22px 0;
+          filter: blur(0.2px) contrast(1.05);
+          animation: barsMove 1.8s ease-in-out infinite;
+          mask-image: radial-gradient(circle at 50% 50%, rgba(0,0,0,1), rgba(0,0,0,0.2));
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .placeholder-bars { animation: none; }
+        }
+
         input[type="range"]::-webkit-slider-thumb {
           appearance: none;
           width: 16px;
@@ -500,3 +544,5 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
     </motion.div>
   );
 }
+
+export default AudioPlayer;

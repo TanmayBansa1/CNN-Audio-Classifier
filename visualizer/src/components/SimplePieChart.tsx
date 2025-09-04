@@ -9,8 +9,8 @@ interface SimplePieChartProps {
   size?: number;
 }
 
-export function SimplePieChart({ data, className = '', size = 200 }: SimplePieChartProps) {
-  const { paths, total } = useMemo(() => {
+function SimplePieChart({ data, className = '', size = 200 }: SimplePieChartProps) {
+  const { paths } = useMemo(() => {
     const total = data.reduce((sum, item) => sum + item.value, 0);
     let currentAngle = 0;
     
@@ -53,7 +53,7 @@ export function SimplePieChart({ data, className = '', size = 200 }: SimplePieCh
       };
     });
     
-    return { paths, total };
+    return { paths };
   }, [data, size]);
 
   return (
@@ -96,4 +96,6 @@ export function SimplePieChart({ data, className = '', size = 200 }: SimplePieCh
     </div>
   );
 }
+
+export default SimplePieChart;
 

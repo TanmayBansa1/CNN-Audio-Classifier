@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { memo, useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import * as d3 from 'd3';
 import { ZoomIn, ZoomOut, RotateCcw, Palette, BarChart3 } from 'lucide-react';
@@ -47,7 +47,7 @@ const COLOR_SCHEMES: ColorScheme[] = [
   }
 ];
 
-export function SpectrogramVisualization({ 
+function SpectrogramVisualization({ 
   data, 
   title = 'Mel-Spectrogram', 
   className = '' 
@@ -441,4 +441,6 @@ export function SpectrogramVisualization({
     </TooltipProvider>
   );
 }
+
+export default memo(SpectrogramVisualization);
 
