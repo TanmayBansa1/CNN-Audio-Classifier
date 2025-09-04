@@ -9,7 +9,7 @@ interface SimpleBarChartProps {
   height?: number;
 }
 
-export function SimpleBarChart({ data, className = '', height = 200 }: SimpleBarChartProps) {
+function SimpleBarChart({ data, className = '', height = 200 }: SimpleBarChartProps) {
   const maxValue = useMemo(() => Math.max(...data.map(d => d.value)), [data]);
 
   return (
@@ -44,4 +44,6 @@ export function SimpleBarChart({ data, className = '', height = 200 }: SimpleBar
     </div>
   );
 }
+
+export default SimpleBarChart;
 

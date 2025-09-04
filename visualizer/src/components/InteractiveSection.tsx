@@ -7,6 +7,7 @@ import type { AudioFile, AnalysisState } from '~/lib/types';
 import { audioAPI } from '~/lib/api';
 import LoadingState from './LoadingState';
 import Error from './Error';
+import { ErrorBoundary } from './ErrorBoundary';
 
 // Dynamic imports for heavy client components
 const FileUpload = dynamic(() => import('./FileUpload').then(mod => ({ default: mod.FileUpload })), {
@@ -14,22 +15,22 @@ const FileUpload = dynamic(() => import('./FileUpload').then(mod => ({ default: 
 });
 
 
-const AudioPlayer = dynamic(() => import('./AudioPlayer').then(mod => ({ default: mod.AudioPlayer })), {
+const AudioPlayer = dynamic(() => import('./AudioPlayer'), {
   ssr: false,
   loading: () => <div className="h-96 bg-white/20 rounded-2xl animate-pulse" />
 });
 
-const SpectrogramVisualization = dynamic(() => import('./SpectrogramVisualization').then(mod => ({ default: mod.SpectrogramVisualization })), {
+const SpectrogramVisualization = dynamic(() => import('./SpectrogramVisualization'), {
   ssr: false,
   loading: () => <div className="h-96 bg-white/20 rounded-2xl animate-pulse" />
 });
 
-const FeatureMapsVisualization = dynamic(() => import('./FeatureMapsVisualization').then(mod => ({ default: mod.FeatureMapsVisualization })), {
+const FeatureMapsVisualization = dynamic(() => import('./FeatureMapsVisualization'), {
   ssr: false,
   loading: () => <div className="h-96 bg-white/20 rounded-2xl animate-pulse" />
 });
 
-const PredictionsDisplay = dynamic(() => import('./PredictionsDisplay').then(mod => ({ default: mod.PredictionsDisplay })), {
+const PredictionsDisplay = dynamic(() => import('./PredictionsDisplay'), {
   ssr: false,
   loading: () => <div className="h-64 bg-white/20 rounded-2xl animate-pulse" />
 });
@@ -109,28 +110,34 @@ export default function InteractiveSection() {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="space-y-12"
         >
-          {/* Enhanced Predictions Display */}
-          <PredictionsDisplay 
-            predictions={analysisState.result.predictions}
-            className=""
-          />
+                      {/* Enhanced Predictions Display */}
+            <ErrorBoundary>
+              <PredictionsDisplay 
+                predictions={analysisState.result.predictions}
+                className=""
+              />
+            </ErrorBoundary>
 
           {/* Audio Analysis Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Audio Player with Waveform */}
-            <AudioPlayer 
-              audioUrl={audioFile.url}
-              waveformData={analysisState.result.waveform}
-              audioFile={audioFile.file}
-              className=""
-            />
+            <ErrorBoundary>
+              <AudioPlayer 
+                audioUrl={audioFile.url}
+                waveformData={analysisState.result.waveform}
+                audioFile={audioFile.file}
+                className=""
+              />
+            </ErrorBoundary>
             
             {/* Mel-Spectrogram Visualization */}
-            <SpectrogramVisualization 
-              data={analysisState.result.input_spectogram}
-              title="Input Mel-Spectrogram"
-              className=""
-            />
+            <ErrorBoundary>
+              <SpectrogramVisualization 
+                data={analysisState.result.input_spectogram}
+                title="Input Mel-Spectrogram"
+                className=""
+              />
+            </ErrorBoundary>
           </div>
 
           {/* CNN Feature Maps Visualization */}
@@ -139,10 +146,12 @@ export default function InteractiveSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <FeatureMapsVisualization 
-              featureMaps={analysisState.result.visualization}
-              className=""
-            />
+            <ErrorBoundary>
+              <FeatureMapsVisualization 
+                featureMaps={analysisState.result.visualization}
+                className=""
+              />
+            </ErrorBoundary>
           </motion.div>
         </motion.div>
       )}

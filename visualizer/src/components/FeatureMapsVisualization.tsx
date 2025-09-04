@@ -45,7 +45,7 @@ const LAYER_DISPLAY_NAMES: Record<string, string> = {
   'layer5': 'Layer 5 (ResBlocks)',
 };
 
-export function FeatureMapsVisualization({ 
+function FeatureMapsVisualization({ 
   featureMaps, 
   className = '' 
 }: FeatureMapsVisualizationProps) {
@@ -369,3 +369,5 @@ export function FeatureMapsVisualization({
     </TooltipProvider>
   );
 }
+
+export default FeatureMapsVisualization;

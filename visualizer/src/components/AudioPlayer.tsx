@@ -24,7 +24,7 @@ interface PlayerState {
   useFallback: boolean;
 }
 
-export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
+function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPlayerProps) {
   const waveformRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
   
@@ -500,3 +500,5 @@ export function AudioPlayer({ audioUrl, waveformData, className = '' }: AudioPla
     </motion.div>
   );
 }
+
+export default AudioPlayer;
