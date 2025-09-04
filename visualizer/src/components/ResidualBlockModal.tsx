@@ -3,8 +3,31 @@
 import { Canvas } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { webglManager } from "~/lib/webgl-context";
 
 export default function ResidualBlockModal({ open, onClose, title }: { open: boolean; onClose: () => void; title: string }) {
+  const [canRender, setCanRender] = useState(false);
+
+  // Manage WebGL context when modal opens/closes
+  useEffect(() => {
+    if (open) {
+      const canUseWebGL = webglManager.register('residual-modal', 1);
+      setCanRender(canUseWebGL);
+    } else {
+      webglManager.unregister('residual-modal');
+      setCanRender(false);
+      //cleanup
+      if (typeof window !== 'undefined' && window.gc) {
+        window.gc();
+      }
+    }
+
+    return () => {
+      webglManager.unregister('residual-modal');
+    };
+  }, [open]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -38,10 +61,34 @@ export default function ResidualBlockModal({ open, onClose, title }: { open: boo
 
             {/* 3D Visualization */}
             <div className="h-[480px] w-full rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 overflow-hidden">
-              <Canvas camera={{ position: [4, 3, 6], fov: 45 }}>
-                <ambientLight intensity={0.6} />
-                <directionalLight position={[8, 8, 5]} intensity={0.8} castShadow />
-                <directionalLight position={[-5, 5, -3]} intensity={0.4} />
+              {canRender ? (
+                <Canvas 
+                camera={{ position: [4, 3, 6], fov: 45 }}
+                dpr={[1, 2]}
+                performance={{ min: 0.5 }}
+                gl={{ 
+                  antialias: false,
+                  alpha: true,
+                  powerPreference: "high-performance",
+                  stencil: false,
+                  depth: true
+                }}
+              >
+                <ambientLight intensity={0.7} />
+                <directionalLight 
+                  position={[8, 8, 5]} 
+                  intensity={0.6} 
+                  castShadow 
+                  shadow-mapSize-width={512}
+                  shadow-mapSize-height={512}
+                  shadow-camera-near={1}
+                  shadow-camera-far={20}
+                  shadow-camera-left={-10}
+                  shadow-camera-right={10}
+                  shadow-camera-top={10}
+                  shadow-camera-bottom={-10}
+                />
+                <directionalLight position={[-5, 5, -3]} intensity={0.3} />
 
                 {/* Main processing path */}
                 <group position={[-2.5, 1, 0]}>
@@ -174,6 +221,15 @@ export default function ResidualBlockModal({ open, onClose, title }: { open: boo
                   minPolarAngle={Math.PI * 0.1}
                 />
               </Canvas>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 bg-slate-300 rounded-full mx-auto animate-pulse"></div>
+                    <p className="text-slate-600">3D View Unavailable</p>
+                    <p className="text-xs text-slate-500">Another 3D view is active</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Parameters section */}
