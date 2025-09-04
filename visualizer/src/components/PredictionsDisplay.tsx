@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Award, BarChart3, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
@@ -411,4 +411,4 @@ function PredictionsDisplay({
   );
 }
 
-export default PredictionsDisplay;
+export default memo(PredictionsDisplay);

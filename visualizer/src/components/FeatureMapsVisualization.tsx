@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { memo, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Layers, Info } from 'lucide-react';
 import { Button } from '~/components/ui/button';
@@ -370,4 +370,4 @@ function FeatureMapsVisualization({
   );
 }
 
-export default FeatureMapsVisualization;
+export default memo(FeatureMapsVisualization);
