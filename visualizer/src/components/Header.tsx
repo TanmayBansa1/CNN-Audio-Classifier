@@ -22,6 +22,7 @@ export default function Header() {
                       width={56}
                       height={56}
                       className="rounded-xl"
+                      priority
                     />
                   </div>
                 </div>
