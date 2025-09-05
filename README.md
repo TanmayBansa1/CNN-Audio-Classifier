@@ -2,6 +2,11 @@
 
 A complete end-to-end pipeline for environmental sound classification using a ResNet-style CNN architecture. The project features real-time audio analysis with beautiful interactive visualizations of model predictions and feature maps.
 
+## Checkout the blog and thread
+(Hashnode)[https://tanmaybansal.hashnode.dev/sunoai]
+(Medium)[https://medium.com/@tanmay.bansal20/i-built-a-convolutional-neural-network-that-understands-audio-d60a66e9e25e]
+(X)[https://x.com/K_A_I11/status/1963850459770175710]
+
 ## 🎯 Features
 
 - **Deep Learning Model**: ResNet-style CNN trained on ESC-50 dataset (50 environmental sound classes)
