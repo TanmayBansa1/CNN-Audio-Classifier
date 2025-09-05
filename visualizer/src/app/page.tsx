@@ -24,7 +24,7 @@ export default function HomePage() {
       </div>
       
       {/* Header */}
-      <Header></Header>
+      <Header />
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -34,9 +34,9 @@ export default function HomePage() {
         <ShowcaseSection />
 
         {/* Interactive Analysis Section */}
-        <InteractiveSection />
+          <InteractiveSection />
       </main>
-      <Footer></Footer>
+      <Footer />
     </div>
   );
 }
