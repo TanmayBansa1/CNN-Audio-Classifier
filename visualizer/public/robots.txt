@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Allow important resources
+Allow: /api/
+Allow: /_next/static/
+Allow: /favicon.ico
+Allow: /sitemap.xml
+
+# Block sensitive paths if any
+Disallow: /admin/
+Disallow: /_next/webpack-hmr
+
+# Sitemap location
+Sitemap: https://sunoai-visualizer.vercel.app/sitemap.xml
+
+# Crawl delay (optional, helps with server load)
+Crawl-delay: 1
+
